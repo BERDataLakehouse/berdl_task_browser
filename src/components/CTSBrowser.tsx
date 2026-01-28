@@ -1,30 +1,45 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { ILayoutRestorer } from '@jupyterlab/application';
 import { IStateDB } from '@jupyterlab/statedb';
-import { Box, Typography } from '@mui/material';
+import { INotebookTracker } from '@jupyterlab/notebook';
+import { Box, Typography, IconButton, Tooltip } from '@mui/material';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { useJobs, useJobDetail } from '../api/ctsApi';
 import { IJobFilters } from '../types/jobs';
 import { TokenInput } from './TokenInput';
 import { JobFilters } from './JobFilters';
 import { JobList } from './JobList';
 import { JobDetail } from './JobDetail';
+import { JobWizard } from './JobWizard';
+import { registerSelectJobCallback } from '../index';
 
 export interface ICTSBrowserProps {
   jupyterApp: JupyterFrontEnd;
   restorer: ILayoutRestorer;
   stateDB: IStateDB;
+  notebookTracker: INotebookTracker | null;
 }
 
 export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
   jupyterApp,
   restorer,
-  stateDB
+  stateDB,
+  notebookTracker
 }) => {
   // State
   const [token, setToken] = useState<string>('');
   const [filters, setFilters] = useState<IJobFilters>({});
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
+
+  // Register callback for external job selection (from Python widget)
+  useEffect(() => {
+    registerSelectJobCallback((jobId: string) => {
+      setSelectedJobId(jobId);
+    });
+  }, []);
 
   // Queries - pass token to all hooks
   const jobsQuery = useJobs(filters, token);
@@ -51,6 +66,14 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
     setSelectedJobId(null);
   }, []);
 
+  const handleOpenWizard = useCallback(() => {
+    setWizardOpen(true);
+  }, []);
+
+  const handleCloseWizard = useCallback(() => {
+    setWizardOpen(false);
+  }, []);
+
   return (
     <Box
       sx={{
@@ -67,7 +90,10 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
           py: 0.5,
           borderBottom: '1px solid',
           borderColor: 'divider',
-          bgcolor: 'action.hover'
+          bgcolor: 'action.hover',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
         }}
       >
         <Typography
@@ -77,6 +103,14 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
         >
           CTS Jobs
         </Typography>
+        <Tooltip title="Create Job">
+          <IconButton size="small" onClick={handleOpenWizard} sx={{ p: 0.25 }}>
+            <FontAwesomeIcon
+              icon={faWandMagicSparkles}
+              style={{ fontSize: '0.7rem' }}
+            />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       {/* Token Input */}
@@ -128,6 +162,13 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
           />
         </Box>
       )}
+
+      {/* Job Wizard Dialog */}
+      <JobWizard
+        open={wizardOpen}
+        onClose={handleCloseWizard}
+        notebookTracker={notebookTracker}
+      />
     </Box>
   );
 };

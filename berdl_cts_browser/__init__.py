@@ -8,6 +8,15 @@ except ImportError:
     warnings.warn("Importing 'berdl_cts_browser' outside a proper installation.")
     __version__ = "dev"
 
+# Export viewer functions for notebook use
+from .viewer import JobWidget, show_job
+
+__all__ = [
+    '__version__',
+    'JobWidget',
+    'show_job',
+]
+
 
 def _jupyter_labextension_paths():
     return [{
