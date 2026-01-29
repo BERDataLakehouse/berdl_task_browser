@@ -124,13 +124,10 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
   const canCancel = isCancelableState(job.state);
 
   return (
-    <Box>
-      {/* Sticky Header */}
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
+      {/* Fixed Header */}
       <Box
         sx={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 1,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -138,7 +135,8 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
           py: 0.5,
           bgcolor: 'background.paper',
           borderBottom: '1px solid',
-          borderColor: 'divider'
+          borderColor: 'divider',
+          flexShrink: 0
         }}
       >
         <Typography
@@ -193,7 +191,7 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
       </Box>
 
       {/* Scrollable Content */}
-      <Box sx={{ p: 1 }}>
+      <Box sx={{ p: 1, overflow: 'auto', flex: 1, minHeight: 0 }}>
         {/* Two-column grid for compact info */}
         <Box
           sx={{
@@ -272,13 +270,6 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
             </Box>
           )}
 
-          {/* Cleaned */}
-          {job.cleaned !== undefined && (
-            <Box>
-              <Typography sx={labelSx}>Cleaned</Typography>
-              <Typography sx={valueSx}>{job.cleaned ? 'Yes' : 'No'}</Typography>
-            </Box>
-          )}
         </Box>
 
         {/* Job ID - full width */}

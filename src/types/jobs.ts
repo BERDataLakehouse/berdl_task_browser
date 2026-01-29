@@ -51,8 +51,6 @@ export interface IJob {
   cpu_factor?: number;
   max_memory?: string;
   logpath?: string;
-  cleaned?: boolean;
-  admin_meta?: Record<string, unknown>;
   cluster?: string;
 }
 

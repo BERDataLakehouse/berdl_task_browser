@@ -64,12 +64,10 @@ export function generateJobCreationCode(params: IJobCreationParams): string {
   const { image, inputFiles, outputDir, cluster, cpus, memory, args } = params;
 
   const lines: string[] = [
-    'from cdmtaskserviceclient import CTSClient',
+    'from berdl_notebook_utils import get_task_service_client',
     'from berdl_cts_browser import show_job',
     '',
-    'TOKEN = "YOUR_TOKEN_HERE"  # Replace with your KBase token',
-    '',
-    'client = CTSClient(TOKEN)',
+    'client = get_task_service_client()',
     '',
     'job = client.submit_job(',
     `    image="${image}",`
@@ -96,7 +94,7 @@ export function generateJobCreationCode(params: IJobCreationParams): string {
 
   lines.push(')');
   lines.push('');
-  lines.push('show_job(job.job_id, TOKEN)');
+  lines.push('show_job(job.job_id)');
 
   return lines.join('\n');
 }
@@ -107,9 +105,5 @@ export function generateJobCreationCode(params: IJobCreationParams): string {
 export function generateJobViewCode(jobId: string): string {
   return `from berdl_cts_browser import show_job
 
-# Replace with your CTS API token
-TOKEN = "YOUR_TOKEN_HERE"
-
-# Display job status widget
-show_job('${jobId}', TOKEN)`;
+show_job('${jobId}')`;
 }

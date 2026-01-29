@@ -59,7 +59,6 @@ export const MOCK_JOBS: IJob[] = [
       { file: 'log.txt' }
     ],
     logpath: '/logs/job-e5f6g7h8/',
-    cleaned: false,
     transition_times: createTransitionTimes([
       { state: 'created', timeAgo: 180 },
       { state: 'download_submitted', timeAgo: 178 },
@@ -85,7 +84,6 @@ export const MOCK_JOBS: IJob[] = [
     error:
       'Container exited with non-zero status: OutOfMemoryError - Java heap space exceeded. Consider increasing memory allocation or reducing input size.',
     max_memory: '4Gi',
-    cleaned: true,
     transition_times: createTransitionTimes([
       { state: 'created', timeAgo: 240 },
       { state: 'download_submitted', timeAgo: 238 },
@@ -162,7 +160,6 @@ export const MOCK_JOBS: IJob[] = [
       { file: 'result1.txt', data_id: 'ws/456/1' },
       { file: 'result2.txt', data_id: 'ws/456/2' }
     ],
-    cleaned: true,
     transition_times: createTransitionTimes([
       { state: 'created', timeAgo: 1500 },
       { state: 'download_submitted', timeAgo: 1498 },
@@ -228,7 +225,6 @@ export const MOCK_JOBS: IJob[] = [
       name: 'kbase/optional-analysis',
       tag: 'v2.0.0'
     },
-    cleaned: true,
     transition_times: createTransitionTimes([
       { state: 'created', timeAgo: 120 },
       { state: 'download_submitted', timeAgo: 118 },

@@ -19,10 +19,12 @@ import {
 } from '../types/jobs';
 import { MOCK_JOBS, MOCK_LOGS, MOCK_EXIT_CODES } from './mockData';
 
-// Use mock data when token is "mock" or "demo"
-const isMockToken = (token?: string): boolean => {
-  const t = token?.toLowerCase();
-  return t === 'mock' || t === 'demo';
+// Check if mock mode is enabled via window.kbase.cts.mockMode
+const isMockMode = (): boolean => {
+  const win = window as unknown as Record<string, unknown>;
+  const kbase = win.kbase as Record<string, unknown> | undefined;
+  const cts = kbase?.cts as { mockMode?: boolean } | undefined;
+  return cts?.mockMode === true;
 };
 
 // API fetch helpers
@@ -99,8 +101,8 @@ export async function fetchJobs(
   filters: IJobFilters = {},
   token?: string
 ): Promise<IJob[]> {
-  // Return mock data for mock/demo token
-  if (isMockToken(token)) {
+  // Return mock data if mock mode enabled
+  if (isMockMode()) {
     let jobs = [...MOCK_JOBS];
 
     // Apply state filter
@@ -130,8 +132,8 @@ export async function fetchJobDetail(
   jobId: string,
   token?: string
 ): Promise<IJob> {
-  // Return mock data for mock/demo token
-  if (isMockToken(token)) {
+  // Return mock data if mock mode enabled
+  if (isMockMode()) {
     const job = MOCK_JOBS.find(j => j.id === jobId);
     if (!job) {
       throw new Error(`Job not found: ${jobId}`);
@@ -146,8 +148,8 @@ export async function fetchJobStatus(
   jobId: string,
   token?: string
 ): Promise<IJobStatus> {
-  // Return mock data for mock/demo token
-  if (isMockToken(token)) {
+  // Return mock data if mock mode enabled
+  if (isMockMode()) {
     const job = MOCK_JOBS.find(j => j.id === jobId);
     if (!job) {
       throw new Error(`Job not found: ${jobId}`);
@@ -160,7 +162,7 @@ export async function fetchJobStatus(
 
 export async function cancelJob(jobId: string, token?: string): Promise<IJob> {
   // Mock cancel - simulate state change
-  if (isMockToken(token)) {
+  if (isMockMode()) {
     const job = MOCK_JOBS.find(j => j.id === jobId);
     if (!job) {
       throw new Error(`Job not found: ${jobId}`);
@@ -177,7 +179,7 @@ export async function fetchJobExitCodes(
   token?: string
 ): Promise<IExitCode[]> {
   // Return mock exit codes
-  if (isMockToken(token)) {
+  if (isMockMode()) {
     return MOCK_EXIT_CODES[jobId] || [];
   }
 
@@ -191,7 +193,7 @@ export async function fetchJobLog(
   token?: string
 ): Promise<string> {
   // Return mock log data
-  if (isMockToken(token)) {
+  if (isMockMode()) {
     const jobLogs = MOCK_LOGS[jobId];
     if (jobLogs && jobLogs[containerNum]) {
       return jobLogs[containerNum][stream] || '';
@@ -225,7 +227,7 @@ export function useJobs(filters: IJobFilters = {}, token?: string) {
   return useQuery({
     queryKey: ['jobs', filters, token],
     queryFn: () => fetchJobs(filters, token),
-    enabled: Boolean(token),
+    enabled: Boolean(token) || isMockMode(),
     refetchInterval: POLLING_INTERVAL_LIST,
     staleTime: 10000
   });
@@ -235,7 +237,7 @@ export function useJobDetail(jobId: string | null, token?: string) {
   return useQuery({
     queryKey: ['job', jobId, token],
     queryFn: () => fetchJobDetail(jobId!, token),
-    enabled: Boolean(jobId) && Boolean(token),
+    enabled: Boolean(jobId) && (Boolean(token) || isMockMode()),
     staleTime: 5000
   });
 }
@@ -250,7 +252,7 @@ export function useJobStatus(
   return useQuery({
     queryKey: ['job-status', jobId, token],
     queryFn: () => fetchJobStatus(jobId!, token),
-    enabled: Boolean(jobId) && Boolean(token),
+    enabled: Boolean(jobId) && (Boolean(token) || isMockMode()),
     refetchInterval: shouldPoll ? POLLING_INTERVAL_ACTIVE : false,
     staleTime: 2000
   });
@@ -278,7 +280,7 @@ export function useJobExitCodes(
   return useQuery({
     queryKey: ['job-exit-codes', jobId, token],
     queryFn: () => fetchJobExitCodes(jobId!, token),
-    enabled: Boolean(jobId) && Boolean(token) && enabled,
+    enabled: Boolean(jobId) && (Boolean(token) || isMockMode()) && enabled,
     staleTime: Infinity // Exit codes don't change
   });
 }
@@ -293,7 +295,7 @@ export function useJobLog(
   return useQuery({
     queryKey: ['job-log', jobId, containerNum, stream, token],
     queryFn: () => fetchJobLog(jobId!, containerNum, stream, token),
-    enabled: Boolean(jobId) && Boolean(token) && enabled,
+    enabled: Boolean(jobId) && (Boolean(token) || isMockMode()) && enabled,
     staleTime: 30000 // Cache logs for 30 seconds
   });
 }
