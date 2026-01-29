@@ -3,6 +3,7 @@ import {
   JupyterFrontEndPlugin,
   ILayoutRestorer
 } from '@jupyterlab/application';
+import { PageConfig } from '@jupyterlab/coreutils';
 import { IStateDB } from '@jupyterlab/statedb';
 import { INotebookTracker } from '@jupyterlab/notebook';
 
@@ -10,9 +11,18 @@ import { Panel } from '@lumino/widgets';
 import { LabIcon } from '@jupyterlab/ui-components';
 import { ReactWidget } from '@jupyterlab/apputils';
 import React from 'react';
+import { createRoot, Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CTSBrowser } from './components/CTSBrowser';
+import { JobEmbedWidget } from './components/JobEmbedWidget';
 import { faListCheck } from '@fortawesome/free-solid-svg-icons';
+
+// Shared MUI theme for sidebar and embedded widgets
+const theme = createTheme();
+
+// Store QueryClient for use by renderJobWidget
+let sharedQueryClient: QueryClient | null = null;
 
 const EXTENSION_ID = 'berdl-cts-browser';
 const PLUGIN_ID = `${EXTENSION_ID}:plugin`;
@@ -26,13 +36,118 @@ const browserIcon = new LabIcon({
   svgstr: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${faListCheck.icon[0]} ${faListCheck.icon[1]}"><path fill="currentColor" d="${faListCheck.icon[4]}"/></svg>`
 });
 
-// Global callback for selecting a job (set by CTSBrowser component)
-let selectJobCallback: ((jobId: string) => void) | null = null;
+// Get CTS namespace from window
+function getCTSNamespace(): ICTSNamespace | null {
+  const win = window as unknown as Record<string, unknown>;
+  const kbase = win.kbase as Record<string, unknown> | undefined;
+  return (kbase?.cts as ICTSNamespace) || null;
+}
 
 export function registerSelectJobCallback(
   callback: (jobId: string) => void
 ): void {
-  selectJobCallback = callback;
+  const cts = getCTSNamespace();
+  if (cts) {
+    cts.selectJob = callback;
+  }
+}
+
+// CTS namespace for console commands and shared state
+interface ICTSNamespace {
+  mockMode: boolean;
+  token: string | null;
+  app: JupyterFrontEnd | null;
+  selectJob: ((jobId: string) => void) | null;
+  renderJobWidget: ((element: HTMLElement, jobId: string) => () => void) | null;
+}
+
+/**
+ * Get auth token from cookies or PageConfig
+ */
+function getAuthToken(): string | null {
+  // First try cookie (production with JupyterHub login)
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'kbase_session') {
+      return value;
+    }
+  }
+
+  // Fall back to PageConfig (dev mode, set from KBASE_AUTH_TOKEN env var)
+  const tokenFromConfig = PageConfig.getOption('kbaseAuthToken');
+  if (tokenFromConfig) {
+    return tokenFromConfig;
+  }
+
+  return null;
+}
+
+/**
+ * Render a job status widget into a DOM element.
+ * Returns a cleanup function to unmount the widget.
+ */
+function renderJobWidget(element: HTMLElement, jobId: string): () => void {
+  if (!sharedQueryClient) {
+    console.error('[CTS] QueryClient not initialized');
+    element.innerHTML =
+      '<span style="color: red; font-size: 11px;">CTS extension not ready</span>';
+    return () => {};
+  }
+
+  const token = getAuthToken();
+  const root: Root = createRoot(element);
+
+  root.render(
+    React.createElement(
+      ThemeProvider,
+      { theme },
+      React.createElement(
+        QueryClientProvider,
+        { client: sharedQueryClient },
+        React.createElement(JobEmbedWidget, { jobId, token })
+      )
+    )
+  );
+
+  // Return cleanup function
+  return () => {
+    root.unmount();
+  };
+}
+
+/**
+ * Register CTS namespace on window.kbase.cts
+ * Usage:
+ *   window.kbase.cts.mockMode = true       // Enable mock mode
+ *   window.kbase.cts.token                 // Auth token (from env or cookie)
+ *   window.kbase.cts.app                   // JupyterLab app instance
+ *   window.kbase.cts.selectJob(id)         // Select job in sidebar
+ *   window.kbase.cts.renderJobWidget(el, id) // Render widget into element
+ */
+function registerCTSNamespace(app: JupyterFrontEnd): void {
+  const win = window as unknown as Record<string, unknown>;
+  const existing = (win.kbase as Record<string, unknown>) || {};
+
+  const token = getAuthToken();
+
+  const ctsNamespace: ICTSNamespace = {
+    mockMode: false,
+    token: token,
+    app: app,
+    selectJob: null,
+    renderJobWidget: renderJobWidget
+  };
+
+  win.kbase = {
+    ...existing,
+    cts: ctsNamespace
+  };
+
+  console.log(
+    '[CTS] Namespace registered. Token:',
+    token ? 'found' : 'not found'
+  );
 }
 
 /**
@@ -52,10 +167,10 @@ const plugin: JupyterFrontEndPlugin<void> = {
   ) => {
     console.log('JupyterLab extension berdl-cts-browser is activated!');
 
-    // Expose app globally for Python widget integration
-    (window as unknown as Record<string, unknown>).jupyterapp = app;
+    // Register CTS namespace on window.kbase.cts
+    registerCTSNamespace(app);
 
-    // Create QueryClient for React Query
+    // Create QueryClient for React Query (shared for embedded widgets)
     const queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -64,6 +179,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
         }
       }
     });
+    sharedQueryClient = queryClient;
 
     // Create a React widget wrapped with QueryClientProvider
     const widget = ReactWidget.create(
@@ -110,11 +226,12 @@ const plugin: JupyterFrontEndPlugin<void> = {
         app.shell.activateById(panel.id);
 
         // Select the job in the browser
-        if (selectJobCallback) {
-          selectJobCallback(jobId);
+        const cts = getCTSNamespace();
+        if (cts?.selectJob) {
+          cts.selectJob(jobId);
         } else {
           console.warn(
-            'CTSBrowser not ready - selectJobCallback not registered'
+            'CTSBrowser not ready - selectJob callback not registered'
           );
         }
       }

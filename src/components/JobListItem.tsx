@@ -40,14 +40,6 @@ const getLastUpdateTime = (job: IJob): string => {
   return '';
 };
 
-// Truncate job ID for display
-const truncateId = (id: string, maxLength = 12): string => {
-  if (id.length <= maxLength) {
-    return id;
-  }
-  return `${id.substring(0, maxLength)}...`;
-};
-
 export const JobListItem: React.FC<IJobListItemProps> = ({
   job,
   selected,
@@ -85,7 +77,7 @@ export const JobListItem: React.FC<IJobListItemProps> = ({
               flex: 1
             }}
           >
-            {truncateId(job.id, 20)}
+            {job.id}
           </Typography>
           <Typography
             sx={{ fontSize: '0.6rem', color: 'text.secondary', flexShrink: 0 }}
@@ -93,7 +85,7 @@ export const JobListItem: React.FC<IJobListItemProps> = ({
             {getLastUpdateTime(job)}
           </Typography>
         </Box>
-        <Box sx={{ mt: 0.25, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Box sx={{ mt: 0.25, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <StatusChip state={job.state} />
           {job.cluster && (
             <Chip
@@ -101,9 +93,9 @@ export const JobListItem: React.FC<IJobListItemProps> = ({
               size="small"
               variant="outlined"
               sx={{
-                height: 16,
-                fontSize: '0.55rem',
-                '& .MuiChip-label': { px: 0.5 }
+                height: 18,
+                fontSize: '0.65rem',
+                '& .MuiChip-label': { px: 0.75 }
               }}
             />
           )}

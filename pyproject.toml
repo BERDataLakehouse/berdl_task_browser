@@ -41,6 +41,7 @@ exclude = [".github", "binder"]
 [tool.hatch.build.targets.wheel.shared-data]
 "berdl_cts_browser/labextension" = "share/jupyter/labextensions/berdl-cts-browser"
 "install.json" = "share/jupyter/labextensions/berdl-cts-browser/install.json"
+"jupyter-config/jupyter_server_config.d/berdl_cts_browser.json" = "etc/jupyter/jupyter_server_config.d/berdl_cts_browser.json"
 
 [tool.hatch.build.hooks.version]
 path = "berdl_cts_browser/_version.py"

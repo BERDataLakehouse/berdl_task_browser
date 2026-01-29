@@ -1,3 +1,5 @@
+import os
+
 try:
     from ._version import __version__
 except ImportError:
@@ -23,3 +25,20 @@ def _jupyter_labextension_paths():
         "src": "labextension",
         "dest": "berdl-cts-browser"
     }]
+
+
+def _jupyter_server_extension_points():
+    return [{"module": "berdl_cts_browser"}]
+
+
+def _load_jupyter_server_extension(server_app):
+    """Expose KBASE_AUTH_TOKEN via PageConfig for dev.
+
+    TODO: This should probably move to CoreUI eventually.
+    """
+    page_config = server_app.web_app.settings.setdefault("page_config_data", {})
+
+    if token := os.environ.get("KBASE_AUTH_TOKEN"):
+        page_config["kbaseAuthToken"] = token
+
+    server_app.log.info("Registered berdl_cts_browser server extension")

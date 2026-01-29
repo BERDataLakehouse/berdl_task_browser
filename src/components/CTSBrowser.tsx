@@ -8,7 +8,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { useJobs, useJobDetail } from '../api/ctsApi';
 import { IJobFilters } from '../types/jobs';
-import { TokenInput } from './TokenInput';
 import { JobFilters } from './JobFilters';
 import { JobList } from './JobList';
 import { JobDetail } from './JobDetail';
@@ -22,14 +21,22 @@ export interface ICTSBrowserProps {
   notebookTracker: INotebookTracker | null;
 }
 
+// Get token from window.kbase.cts namespace
+function getTokenFromNamespace(): string {
+  const win = window as unknown as Record<string, unknown>;
+  const kbase = win.kbase as Record<string, unknown> | undefined;
+  const cts = kbase?.cts as { token?: string } | undefined;
+  return cts?.token || '';
+}
+
 export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
   jupyterApp,
   restorer,
   stateDB,
   notebookTracker
 }) => {
-  // State
-  const [token, setToken] = useState<string>('');
+  // State - token is auto-detected from window.kbase.cts namespace
+  const token = getTokenFromNamespace();
   const [filters, setFilters] = useState<IJobFilters>({});
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -46,10 +53,6 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
   const jobDetailQuery = useJobDetail(selectedJobId, token);
 
   // Handlers
-  const handleTokenChange = useCallback((newToken: string) => {
-    setToken(newToken);
-  }, []);
-
   const handleFiltersChange = useCallback((newFilters: IJobFilters) => {
     setFilters(newFilters);
   }, []);
@@ -113,9 +116,6 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
         </Tooltip>
       </Box>
 
-      {/* Token Input */}
-      <TokenInput token={token} onTokenChange={handleTokenChange} />
-
       {/* Filters */}
       <JobFilters
         filters={filters}
@@ -129,7 +129,7 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
         {!token ? (
           <Box sx={{ p: 1, textAlign: 'center' }}>
             <Typography sx={{ fontSize: '0.7rem' }} color="text.secondary">
-              Enter token or "mock" to view jobs
+              No auth token found. Set KBASE_AUTH_TOKEN environment variable.
             </Typography>
           </Box>
         ) : (
@@ -150,7 +150,9 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
             borderTop: '1px solid',
             borderColor: 'divider',
             maxHeight: '50%',
-            overflow: 'auto'
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
           }}
         >
           <JobDetail
