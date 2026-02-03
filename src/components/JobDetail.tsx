@@ -130,9 +130,12 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
           alignItems: 'center',
           px: 1,
           py: 0.5,
-          bgcolor: 'background.paper',
+          bgcolor: 'action.hover',
           borderBottom: '1px solid',
           borderColor: 'divider',
+          boxShadow: '0 -2px 4px rgba(0,0,0,0.12)',
+          position: 'relative',
+          zIndex: 1,
           flexShrink: 0
         }}
       >
@@ -147,44 +150,13 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
         >
           Job Details
         </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          {canCancel && (
-            <Button
-              size="small"
-              color="warning"
-              variant="outlined"
-              onClick={handleCancel}
-              disabled={cancelMutation.isPending}
-              startIcon={
-                cancelMutation.isPending ? (
-                  <CircularProgress size={10} />
-                ) : (
-                  <FontAwesomeIcon icon={faBan} />
-                )
-              }
-              sx={{
-                fontSize: '0.6rem',
-                py: 0.25,
-                px: 0.75,
-                minWidth: 0,
-                textTransform: 'none',
-                '& .MuiButton-startIcon': {
-                  mr: 0.5,
-                  '& svg': { fontSize: '0.6rem' }
-                }
-              }}
-            >
-              Cancel
-            </Button>
-          )}
-          <IconButton
-            size="small"
-            onClick={onClose}
-            sx={{ p: 0.25, opacity: 0.6, '&:hover': { opacity: 1 } }}
-          >
-            <FontAwesomeIcon icon={faTimes} style={{ fontSize: '0.6rem' }} />
-          </IconButton>
-        </Box>
+        <IconButton
+          size="small"
+          onClick={onClose}
+          sx={{ p: 0.25, opacity: 0.6, '&:hover': { opacity: 1 } }}
+        >
+          <FontAwesomeIcon icon={faTimes} style={{ fontSize: '0.6rem' }} />
+        </IconButton>
       </Box>
 
       {/* Scrollable Content */}
@@ -201,7 +173,38 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
           {/* Status */}
           <Box>
             <Typography sx={labelSx}>Status</Typography>
-            <StatusChip state={job.state} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <StatusChip state={job.state} />
+              {canCancel && (
+                <Button
+                  size="small"
+                  color="warning"
+                  variant="outlined"
+                  onClick={handleCancel}
+                  disabled={cancelMutation.isPending}
+                  startIcon={
+                    cancelMutation.isPending ? (
+                      <CircularProgress size={10} />
+                    ) : (
+                      <FontAwesomeIcon icon={faBan} />
+                    )
+                  }
+                  sx={{
+                    fontSize: '0.6rem',
+                    py: 0.25,
+                    px: 0.75,
+                    minWidth: 0,
+                    textTransform: 'none',
+                    '& .MuiButton-startIcon': {
+                      mr: 0.5,
+                      '& svg': { fontSize: '0.6rem' }
+                    }
+                  }}
+                >
+                  Cancel
+                </Button>
+              )}
+            </Box>
           </Box>
 
           {/* User */}

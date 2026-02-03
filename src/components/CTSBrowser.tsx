@@ -7,11 +7,11 @@ import { Box, Typography, IconButton, Tooltip } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { useJobs, useJobDetail } from '../api/ctsApi';
-import { IJobFilters } from '../types/jobs';
+import { IJob, IJobFilters } from '../types/jobs';
 import { JobFilters } from './JobFilters';
 import { JobList } from './JobList';
 import { JobDetail } from './JobDetail';
-import { JobWizard } from './JobWizard';
+import { showJobWizardDialog } from '../dialogs/JobWizardDialog';
 import { registerSelectJobCallback } from '../index';
 import { getToken } from '../auth/token';
 
@@ -30,7 +30,6 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
 }) => {
   const [filters, setFilters] = useState<IJobFilters>({});
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
-  const [wizardOpen, setWizardOpen] = useState(false);
 
   // Register callback for external job selection (from Python widget)
   useEffect(() => {
@@ -60,12 +59,13 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
   }, []);
 
   const handleOpenWizard = useCallback(() => {
-    setWizardOpen(true);
-  }, []);
+    showJobWizardDialog(notebookTracker);
+  }, [notebookTracker]);
 
-  const handleCloseWizard = useCallback(() => {
-    setWizardOpen(false);
-  }, []);
+  const getStatusSummary = (jobs: IJob[] | undefined): string => {
+    if (!jobs || jobs.length === 0) return 'No jobs';
+    return `${jobs.length} job${jobs.length === 1 ? '' : 's'}`;
+  };
 
   return (
     <Box
@@ -89,12 +89,8 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
           justifyContent: 'space-between'
         }}
       >
-        <Typography
-          variant="caption"
-          fontWeight="bold"
-          textTransform="uppercase"
-        >
-          CTS Jobs
+        <Typography variant="caption" color="text.secondary">
+          {getStatusSummary(jobsQuery.data)}
         </Typography>
         <Tooltip title="Create Job">
           <IconButton size="small" onClick={handleOpenWizard} sx={{ p: 0.25 }}>
@@ -142,7 +138,9 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
             maxHeight: '50%',
             display: 'flex',
             flexDirection: 'column',
-            overflow: 'hidden'
+            overflow: 'visible',
+            position: 'relative',
+            zIndex: 2
           }}
         >
           <JobDetail
@@ -153,13 +151,6 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
           />
         </Box>
       )}
-
-      {/* Job Wizard Dialog */}
-      <JobWizard
-        open={wizardOpen}
-        onClose={handleCloseWizard}
-        notebookTracker={notebookTracker}
-      />
     </Box>
   );
 };

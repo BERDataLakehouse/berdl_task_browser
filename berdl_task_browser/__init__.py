@@ -32,7 +32,7 @@ def _jupyter_server_extension_points():
 
 
 def _load_jupyter_server_extension(server_app):
-    """Expose KBASE_AUTH_TOKEN via PageConfig for dev.
+    """Expose config via PageConfig for dev.
 
     TODO: This should probably move to CoreUI eventually.
     """
@@ -40,5 +40,8 @@ def _load_jupyter_server_extension(server_app):
 
     if token := os.environ.get("KBASE_AUTH_TOKEN"):
         page_config["kbaseAuthToken"] = token
+
+    if os.environ.get("CTS_MOCK_MODE", "").lower() in ("true", "1", "yes"):
+        page_config["ctsMockMode"] = "true"
 
     server_app.log.info("Registered berdl_task_browser server extension")

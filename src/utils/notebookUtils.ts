@@ -52,12 +52,30 @@ export function insertCodeCell(
  */
 export interface IJobCreationParams {
   image: string;
-  inputFiles: string;
+  inputFiles: string[];
   outputDir: string;
   cluster?: string;
   cpus?: number;
   memory?: string;
-  args?: string;
+  args: string[];
+}
+
+/**
+ * Format an array of strings as a Python list literal
+ * @param items - Array of strings to format
+ * @param indent - Number of spaces for the base indentation
+ * @returns Python list literal string
+ */
+export function formatPythonList(items: string[], indent: number): string {
+  if (items.length === 0) {
+    return '[]';
+  }
+  if (items.length === 1) {
+    return `["${items[0]}"]`;
+  }
+  const spaces = ' '.repeat(indent);
+  const innerSpaces = ' '.repeat(indent + 4);
+  return `[\n${items.map(item => `${innerSpaces}"${item}",`).join('\n')}\n${spaces}]`;
 }
 
 export function generateJobCreationCode(params: IJobCreationParams): string {
@@ -73,8 +91,8 @@ export function generateJobCreationCode(params: IJobCreationParams): string {
     `    image="${image}",`
   ];
 
-  if (inputFiles.trim()) {
-    lines.push(`    input_files=${inputFiles.trim()},`);
+  if (inputFiles.length > 0) {
+    lines.push(`    input_files=${formatPythonList(inputFiles, 4)},`);
   }
 
   lines.push(`    output_dir="${outputDir}",`);
@@ -88,8 +106,8 @@ export function generateJobCreationCode(params: IJobCreationParams): string {
   if (memory) {
     lines.push(`    memory="${memory}",`);
   }
-  if (args) {
-    lines.push(`    args=${args},`);
+  if (args.length > 0) {
+    lines.push(`    args=${formatPythonList(args, 4)},`);
   }
 
   lines.push(')');

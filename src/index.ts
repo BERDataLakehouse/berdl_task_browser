@@ -15,7 +15,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CTSBrowser } from './components/CTSBrowser';
 import { JobEmbedWidget } from './components/JobEmbedWidget';
-import { faListCheck } from '@fortawesome/free-solid-svg-icons';
+import { faBarsProgress } from '@fortawesome/free-solid-svg-icons';
+import { PageConfig } from '@jupyterlab/coreutils';
 import { getToken } from './auth/token';
 
 // Shared MUI theme for sidebar and embedded widgets
@@ -32,7 +33,7 @@ const COMMAND_SELECT_JOB = 'task-browser:select-job';
 
 const browserIcon = new LabIcon({
   name: ICON_ID,
-  svgstr: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${faListCheck.icon[0]} ${faListCheck.icon[1]}"><path fill="currentColor" d="${faListCheck.icon[4]}"/></svg>`
+  svgstr: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${faBarsProgress.icon[0]} ${faBarsProgress.icon[1]}"><path fill="currentColor" d="${faBarsProgress.icon[4]}"/></svg>`
 });
 
 function getCTSNamespace(): ICTSNamespace | null {
@@ -96,6 +97,10 @@ function renderJobWidget(element: HTMLElement, jobId: string): () => void {
  * 1. Bridge for Python widget (show_job) to render React components
  * 2. Console debugging interface
  *
+ * Mock mode can be enabled via:
+ *   - Environment variable: CTS_MOCK_MODE=true (set when starting JupyterLab)
+ *   - Console: window.kbase.task_browser.mockMode = true
+ *
  * Console usage:
  *   window.kbase.task_browser.mockMode = true         // Enable mock mode
  *   window.kbase.task_browser.getToken()              // Get current auth token
@@ -107,8 +112,10 @@ function registerCTSNamespace(app: JupyterFrontEnd): void {
   const win = window as unknown as Record<string, unknown>;
   const existing = (win.kbase as Record<string, unknown>) || {};
 
+  const mockModeFromEnv = PageConfig.getOption('ctsMockMode') === 'true';
+
   const ctsNamespace: ICTSNamespace = {
-    mockMode: false,
+    mockMode: mockModeFromEnv,
     getToken: getToken,
     app: app,
     selectJob: null,
@@ -123,7 +130,9 @@ function registerCTSNamespace(app: JupyterFrontEnd): void {
   const token = getToken();
   console.log(
     '[CTS] Namespace registered. Token:',
-    token ? 'found' : 'not found'
+    token ? 'found' : 'not found',
+    '| Mock mode:',
+    mockModeFromEnv ? 'enabled' : 'disabled'
   );
 }
 
@@ -181,7 +190,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
     widget.node.style.overflow = 'hidden';
 
     panel.addWidget(widget);
-    app.shell.add(panel, 'left', { rank: 1 });
+    app.shell.add(panel, 'left', { rank: 1000 });
     restorer.add(panel, PANEL_ID);
 
     // Register command to select a job from external sources (e.g., Python widget)
