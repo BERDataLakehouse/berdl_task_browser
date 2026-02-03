@@ -1,5 +1,5 @@
 {
-    "name": "berdl-cts-browser",
+    "name": "berdl-task-browser",
     "version": "0.1.0",
     "description": "A JupyterLab extension for browsing CTS data",
     "keywords": [
@@ -7,9 +7,9 @@
         "jupyterlab",
         "jupyterlab-extension"
     ],
-    "homepage": "https://github.com/kbaseincubator/berdl-cts-browser",
+    "homepage": "https://github.com/kbaseincubator/berdl-task-browser",
     "bugs": {
-        "url": "https://github.com/kbaseincubator/berdl-cts-browser/issues"
+        "url": "https://github.com/kbaseincubator/berdl-task-browser/issues"
     },
     "license": "BSD-3-Clause",
     "author": {
@@ -26,7 +26,7 @@
     "style": "style/index.css",
     "repository": {
         "type": "git",
-        "url": "https://github.com/kbaseincubator/berdl-cts-browser.git"
+        "url": "https://github.com/kbaseincubator/berdl-task-browser.git"
     },
     "scripts": {
         "build": "jlpm build:lib && jlpm build:labextension:dev",
@@ -38,7 +38,7 @@
         "clean": "jlpm clean:lib",
         "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
         "clean:lintcache": "rimraf .eslintcache .stylelintcache",
-        "clean:labextension": "rimraf berdl_cts_browser/labextension berdl_cts_browser/_version.py",
+        "clean:labextension": "rimraf berdl_task_browser/labextension berdl_task_browser/_version.py",
         "clean:all": "jlpm clean:lib && jlpm clean:labextension && jlpm clean:lintcache",
         "eslint": "jlpm eslint:check --fix",
         "eslint:check": "eslint . --cache --ext .ts,.tsx",
@@ -113,7 +113,7 @@
     },
     "jupyterlab": {
         "extension": true,
-        "outputDir": "berdl_cts_browser/labextension"
+        "outputDir": "berdl_task_browser/labextension"
     },
     "eslintIgnore": [
         "node_modules",

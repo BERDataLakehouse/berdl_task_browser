@@ -24,11 +24,11 @@ const theme = createTheme();
 // Store QueryClient for use by renderJobWidget
 let sharedQueryClient: QueryClient | null = null;
 
-const EXTENSION_ID = 'berdl-cts-browser';
+const EXTENSION_ID = 'berdl-task-browser';
 const PLUGIN_ID = `${EXTENSION_ID}:plugin`;
 const ICON_ID = `${EXTENSION_ID}:icon`;
 const PANEL_ID = `${EXTENSION_ID}-panel`;
-const COMMAND_SELECT_JOB = 'cts-browser:select-job';
+const COMMAND_SELECT_JOB = 'task-browser:select-job';
 
 // Create LabIcon from FontAwesome icon
 const browserIcon = new LabIcon({
@@ -165,7 +165,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
     stateDB: IStateDB,
     notebookTracker: INotebookTracker | null
   ) => {
-    console.log('JupyterLab extension berdl-cts-browser is activated!');
+    console.log('JupyterLab extension berdl-task-browser is activated!');
 
     // Register CTS namespace on window.kbase.cts
     registerCTSNamespace(app);
@@ -218,7 +218,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
       execute: args => {
         const jobId = args.jobId as string;
         if (!jobId) {
-          console.warn('cts-browser:select-job called without jobId');
+          console.warn('task-browser:select-job called without jobId');
           return;
         }
 

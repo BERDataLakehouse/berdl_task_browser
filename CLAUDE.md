@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is **berdl-cts-browser**, a JupyterLab 4.x extension for browsing CTS (Compute Transfer Service) job data. It includes:
+This is **berdl-task-browser**, a JupyterLab 4.x extension for browsing CTS (Compute Transfer Service) job data. It includes:
 
 - **Sidebar panel** - Browse and monitor CTS jobs
 - **Job Wizard** - Generate Python code for job submission
@@ -54,11 +54,11 @@ The `KBASE_AUTH_TOKEN` env var is required for API access. In production (Jupyte
 - Registers a sidebar panel (left side, rank 1)
 - Creates a React widget wrapped with TanStack Query's `QueryClientProvider`
 - Registers `window.kbase.cts` namespace for token/state sharing
-- Exposes `cts-browser:select-job` command for Python widget integration
+- Exposes `task-browser:select-job` command for Python widget integration
 
 ### Server Extension
 
-`berdl_cts_browser/__init__.py` - Exposes `KBASE_AUTH_TOKEN` via PageConfig for JS access.
+`berdl_task_browser/__init__.py` - Exposes `KBASE_AUTH_TOKEN` via PageConfig for JS access.
 
 ### Component Structure
 
@@ -82,7 +82,7 @@ src/
     ├── JobWizard.tsx     # Job creation wizard dialog
     └── StatusChip.tsx    # Job state badge
 
-berdl_cts_browser/
+berdl_task_browser/
 ├── __init__.py           # Package init, server extension
 └── viewer.py             # Python widget (show_job, JobWidget)
 ```
@@ -128,7 +128,7 @@ window.kbase.cts.selectJob(id)     // Select job in sidebar
 ### Python Widget
 
 ```python
-from berdl_cts_browser import show_job
+from berdl_task_browser import show_job
 
 # Display auto-refreshing job status widget
 show_job('job-id-here')  # Token from KBASE_AUTH_TOKEN env var
@@ -140,7 +140,7 @@ The wizard (magic wand button in sidebar) generates code using `cdm-task-service
 
 ```python
 from cdmtaskserviceclient import CTSClient
-from berdl_cts_browser import show_job
+from berdl_task_browser import show_job
 
 client = CTSClient()  # Token from env var
 

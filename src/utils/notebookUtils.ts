@@ -65,7 +65,7 @@ export function generateJobCreationCode(params: IJobCreationParams): string {
 
   const lines: string[] = [
     'from berdl_notebook_utils import get_task_service_client',
-    'from berdl_cts_browser import show_job',
+    'from berdl_task_browser import show_job',
     '',
     'client = get_task_service_client()',
     '',
@@ -103,7 +103,7 @@ export function generateJobCreationCode(params: IJobCreationParams): string {
  * Generate Python code for viewing an existing job
  */
 export function generateJobViewCode(jobId: string): string {
-  return `from berdl_cts_browser import show_job
+  return `from berdl_task_browser import show_job
 
 show_job('${jobId}')`;
 }

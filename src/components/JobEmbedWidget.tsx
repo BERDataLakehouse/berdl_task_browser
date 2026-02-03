@@ -61,7 +61,7 @@ export const JobEmbedWidget: React.FC<IJobEmbedWidgetProps> = ({
     } | undefined;
 
     if (cts?.app?.commands) {
-      cts.app.commands.execute('cts-browser:select-job', { jobId });
+      cts.app.commands.execute('task-browser:select-job', { jobId });
     }
   };
 

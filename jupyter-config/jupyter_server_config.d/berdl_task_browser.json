@@ -1,7 +1,7 @@
 {
   "ServerApp": {
     "jpserver_extensions": {
-      "berdl_cts_browser": true
+      "berdl_task_browser": true
     }
   }
 }

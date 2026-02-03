@@ -3,7 +3,7 @@ requires = ["hatchling>=1.5.0", "jupyterlab>=4.0.0,<5", "hatch-nodejs-version>=0
 build-backend = "hatchling.build"
 
 [project]
-name = "berdl_cts_browser"
+name = "berdl_task_browser"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
@@ -35,25 +35,25 @@ source = "nodejs"
 fields = ["description", "authors", "urls", "keywords"]
 
 [tool.hatch.build.targets.sdist]
-artifacts = ["berdl_cts_browser/labextension"]
+artifacts = ["berdl_task_browser/labextension"]
 exclude = [".github", "binder"]
 
 [tool.hatch.build.targets.wheel.shared-data]
-"berdl_cts_browser/labextension" = "share/jupyter/labextensions/berdl-cts-browser"
-"install.json" = "share/jupyter/labextensions/berdl-cts-browser/install.json"
-"jupyter-config/jupyter_server_config.d/berdl_cts_browser.json" = "etc/jupyter/jupyter_server_config.d/berdl_cts_browser.json"
+"berdl_task_browser/labextension" = "share/jupyter/labextensions/berdl-task-browser"
+"install.json" = "share/jupyter/labextensions/berdl-task-browser/install.json"
+"jupyter-config/jupyter_server_config.d/berdl_task_browser.json" = "etc/jupyter/jupyter_server_config.d/berdl_task_browser.json"
 
 [tool.hatch.build.hooks.version]
-path = "berdl_cts_browser/_version.py"
+path = "berdl_task_browser/_version.py"
 
 [tool.hatch.build.hooks.jupyter-builder]
 dependencies = ["hatch-jupyter-builder>=0.5"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
-    "berdl_cts_browser/labextension/static/style.js",
-    "berdl_cts_browser/labextension/package.json",
+    "berdl_task_browser/labextension/static/style.js",
+    "berdl_task_browser/labextension/package.json",
 ]
-skip-if-exists = ["berdl_cts_browser/labextension/static/style.js"]
+skip-if-exists = ["berdl_task_browser/labextension/static/style.js"]
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 build_cmd = "build:prod"
@@ -63,7 +63,7 @@ npm = ["jlpm"]
 build_cmd = "install:extension"
 npm = ["jlpm"]
 source_dir = "src"
-build_dir = "berdl_cts_browser/labextension"
+build_dir = "berdl_task_browser/labextension"
 
 [tool.jupyter-releaser.options]
 version_cmd = "hatch version"
