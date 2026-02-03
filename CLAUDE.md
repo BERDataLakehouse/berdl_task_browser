@@ -90,10 +90,12 @@ berdl_task_browser/
 ### Token Handling
 
 **Production (JupyterHub):**
+
 - Python: `KBASE_AUTH_TOKEN` env var (set by JupyterHub pre_spawn_start)
 - JS: `kbase_session` cookie from browser
 
 **Development:**
+
 - Set `KBASE_AUTH_TOKEN` env var when starting JupyterLab
 - Server extension exposes it via PageConfig
 - JS reads from PageConfig, falls back to cookies
@@ -102,10 +104,10 @@ berdl_task_browser/
 ### Console Commands
 
 ```javascript
-window.kbase.cts.mockMode = true   // Enable mock mode
-window.kbase.cts.token             // Current auth token
-window.kbase.cts.app               // JupyterLab app instance
-window.kbase.cts.selectJob(id)     // Select job in sidebar
+window.kbase.cts.mockMode = true; // Enable mock mode
+window.kbase.cts.token; // Current auth token
+window.kbase.cts.app; // JupyterLab app instance
+window.kbase.cts.selectJob(id); // Select job in sidebar
 ```
 
 ### Key Patterns
