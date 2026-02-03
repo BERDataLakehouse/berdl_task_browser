@@ -19,11 +19,11 @@ import {
 } from '../types/jobs';
 import { MOCK_JOBS, MOCK_LOGS, MOCK_EXIT_CODES } from './mockData';
 
-// Check if mock mode is enabled via window.kbase.cts.mockMode
+// Check if mock mode is enabled via window.kbase.task_browser.mockMode
 const isMockMode = (): boolean => {
   const win = window as unknown as Record<string, unknown>;
   const kbase = win.kbase as Record<string, unknown> | undefined;
-  const cts = kbase?.cts as { mockMode?: boolean } | undefined;
+  const cts = kbase?.task_browser as { mockMode?: boolean } | undefined;
   return cts?.mockMode === true;
 };
 

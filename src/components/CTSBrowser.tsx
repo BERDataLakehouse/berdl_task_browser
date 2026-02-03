@@ -21,11 +21,19 @@ export interface ICTSBrowserProps {
   notebookTracker: INotebookTracker | null;
 }
 
-// Get token from window.kbase.cts namespace
-function getTokenFromNamespace(): string {
+/**
+ * Get auth token from window.kbase.task_browser namespace.
+ *
+ * Token source (set by registerCTSNamespace in index.ts):
+ * - Production (JupyterHub): kbase_session cookie
+ * - Development: KBASE_AUTH_TOKEN env var via PageConfig
+ *
+ * Called as a function (not stored as constant) to always get current value.
+ */
+function getToken(): string {
   const win = window as unknown as Record<string, unknown>;
   const kbase = win.kbase as Record<string, unknown> | undefined;
-  const cts = kbase?.cts as { token?: string } | undefined;
+  const cts = kbase?.task_browser as { token?: string } | undefined;
   return cts?.token || '';
 }
 
@@ -35,8 +43,8 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
   stateDB,
   notebookTracker
 }) => {
-  // State - token is auto-detected from window.kbase.cts namespace
-  const token = getTokenFromNamespace();
+  // Get token fresh on each render from window.kbase.task_browser namespace
+  const token = getToken();
   const [filters, setFilters] = useState<IJobFilters>({});
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);

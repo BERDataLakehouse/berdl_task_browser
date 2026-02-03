@@ -60,7 +60,7 @@ export const JobEmbedWidget: React.FC<IJobEmbedWidgetProps> = ({
   const handleViewInfo = () => {
     const win = window as unknown as Record<string, unknown>;
     const kbase = win.kbase as Record<string, unknown> | undefined;
-    const cts = kbase?.cts as
+    const cts = kbase?.task_browser as
       | {
           app?: {
             commands?: { execute: (cmd: string, args: unknown) => void };

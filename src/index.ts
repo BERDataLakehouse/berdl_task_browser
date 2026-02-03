@@ -40,7 +40,7 @@ const browserIcon = new LabIcon({
 function getCTSNamespace(): ICTSNamespace | null {
   const win = window as unknown as Record<string, unknown>;
   const kbase = win.kbase as Record<string, unknown> | undefined;
-  return (kbase?.cts as ICTSNamespace) || null;
+  return (kbase?.task_browser as ICTSNamespace) || null;
 }
 
 export function registerSelectJobCallback(
@@ -62,10 +62,17 @@ interface ICTSNamespace {
 }
 
 /**
- * Get auth token from cookies or PageConfig
+ * Get KBase auth token from available sources.
+ *
+ * Token sources (checked in order):
+ * 1. kbase_session cookie - set by JupyterHub in production
+ * 2. PageConfig kbaseAuthToken - set from KBASE_AUTH_TOKEN env var in dev
+ *
+ * The token is stored in window.kbase.task_browser.token by registerCTSNamespace()
+ * and read by components via getToken() in CTSBrowser.tsx.
  */
 function getAuthToken(): string | null {
-  // First try cookie (production with JupyterHub login)
+  // Production: JupyterHub sets kbase_session cookie on login
   const cookies = document.cookie.split(';');
   for (const cookie of cookies) {
     const [name, value] = cookie.trim().split('=');
@@ -74,7 +81,8 @@ function getAuthToken(): string | null {
     }
   }
 
-  // Fall back to PageConfig (dev mode, set from KBASE_AUTH_TOKEN env var)
+  // Development: KBASE_AUTH_TOKEN env var exposed via server extension
+  // (see berdl_task_browser/__init__.py)
   const tokenFromConfig = PageConfig.getOption('kbaseAuthToken');
   if (tokenFromConfig) {
     return tokenFromConfig;
@@ -117,13 +125,19 @@ function renderJobWidget(element: HTMLElement, jobId: string): () => void {
 }
 
 /**
- * Register CTS namespace on window.kbase.cts
- * Usage:
- *   window.kbase.cts.mockMode = true       // Enable mock mode
- *   window.kbase.cts.token                 // Auth token (from env or cookie)
- *   window.kbase.cts.app                   // JupyterLab app instance
- *   window.kbase.cts.selectJob(id)         // Select job in sidebar
- *   window.kbase.cts.renderJobWidget(el, id) // Render widget into element
+ * Register window.kbase.task_browser namespace for shared state and console access.
+ *
+ * This namespace serves as:
+ * 1. Single source of truth for auth token (read by components via getToken())
+ * 2. Bridge for Python widget (show_job) to render React components
+ * 3. Console debugging interface
+ *
+ * Console usage:
+ *   window.kbase.task_browser.mockMode = true         // Enable mock mode
+ *   window.kbase.task_browser.token                   // View current auth token
+ *   window.kbase.task_browser.app                     // JupyterLab app instance
+ *   window.kbase.task_browser.selectJob(id)           // Select job in sidebar
+ *   window.kbase.task_browser.renderJobWidget(el, id) // Render widget into DOM element
  */
 function registerCTSNamespace(app: JupyterFrontEnd): void {
   const win = window as unknown as Record<string, unknown>;
@@ -167,7 +181,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
   ) => {
     console.log('JupyterLab extension berdl-task-browser is activated!');
 
-    // Register CTS namespace on window.kbase.cts
+    // Register CTS namespace on window.kbase.task_browser
     registerCTSNamespace(app);
 
     // Create QueryClient for React Query (shared for embedded widgets)

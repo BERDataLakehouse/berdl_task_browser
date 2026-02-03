@@ -1,8 +1,8 @@
 """
 CTS Job Viewer - IPython widget for viewing CTS job status.
 
-Uses the JupyterLab extension's React components via window.kbase.cts.renderJobWidget().
-Automatically uses mock data when window.kbase.cts.mockMode = true.
+Uses the JupyterLab extension's React components via window.kbase.task_browser.renderJobWidget().
+Automatically uses mock data when window.kbase.task_browser.mockMode = true.
 """
 
 import uuid
@@ -48,7 +48,7 @@ class JobWidget(widgets.HTML):
                     return;
                 }}
 
-                var cts = window.kbase && window.kbase.cts;
+                var cts = window.kbase && window.kbase.task_browser;
                 if (!cts || !cts.renderJobWidget) {{
                     container.innerHTML = '<span style="color: #c62828; font-size: 11px;">CTS extension not loaded</span>';
                     return;
@@ -67,7 +67,7 @@ def show_job(job_id: str) -> None:
     Display a job status widget with auto-refresh.
 
     Uses the CTS extension's React components. Enable mock mode via browser console:
-    window.kbase.cts.mockMode = true
+    window.kbase.task_browser.mockMode = true
 
     Parameters
     ----------
