@@ -25,7 +25,6 @@ interface IJobDetailProps {
   isLoading: boolean;
   error: Error | null;
   onClose: () => void;
-  token: string;
 }
 
 // Format ISO timestamp to readable format
@@ -76,13 +75,11 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
   job,
   isLoading,
   error,
-  onClose,
-  token
+  onClose
 }) => {
-  const cancelMutation = useCancelJob(token);
+  const cancelMutation = useCancelJob();
   const exitCodesQuery = useJobExitCodes(
     job?.id || null,
-    token,
     job ? isTerminalState(job.state) : false
   );
 
@@ -413,7 +410,7 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
         </Box>
 
         {/* Log Viewer */}
-        <LogViewer jobId={job.id} token={token} />
+        <LogViewer jobId={job.id} />
       </Box>
     </Box>
   );

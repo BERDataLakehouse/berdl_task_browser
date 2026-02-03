@@ -21,13 +21,11 @@ import { useJobLog } from '../api/ctsApi';
 
 interface ILogViewerProps {
   jobId: string;
-  token: string;
   containerCount?: number;
 }
 
 export const LogViewer: React.FC<ILogViewerProps> = ({
   jobId,
-  token,
   containerCount = 1
 }) => {
   const [expanded, setExpanded] = useState(false);
@@ -39,14 +37,12 @@ export const LogViewer: React.FC<ILogViewerProps> = ({
     jobId,
     containerNum,
     'stdout',
-    token,
     expanded && activeTab === 'stdout'
   );
   const stderrQuery = useJobLog(
     jobId,
     containerNum,
     'stderr',
-    token,
     expanded && activeTab === 'stderr'
   );
 

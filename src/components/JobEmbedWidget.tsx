@@ -1,6 +1,6 @@
 /**
  * Embeddable job status widget for Python notebook cells.
- * Rendered via window.kbase.cts.renderJobWidget()
+ * Rendered via window.kbase.task_browser.renderJobWidget()
  */
 
 import React from 'react';
@@ -13,7 +13,6 @@ import { IJob } from '../types/jobs';
 
 export interface IJobEmbedWidgetProps {
   jobId: string;
-  token: string | null;
 }
 
 // Format timestamp to relative time (same as JobListItem)
@@ -47,15 +46,8 @@ const getLastUpdateTime = (job: IJob): string => {
   return '';
 };
 
-export const JobEmbedWidget: React.FC<IJobEmbedWidgetProps> = ({
-  jobId,
-  token
-}) => {
-  const {
-    data: job,
-    isLoading,
-    error
-  } = useJobDetail(jobId, token || undefined);
+export const JobEmbedWidget: React.FC<IJobEmbedWidgetProps> = ({ jobId }) => {
+  const { data: job, isLoading, error } = useJobDetail(jobId);
 
   const handleViewInfo = () => {
     const win = window as unknown as Record<string, unknown>;

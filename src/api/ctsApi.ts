@@ -18,17 +18,11 @@ import {
   isTerminalState
 } from '../types/jobs';
 import { MOCK_JOBS, MOCK_LOGS, MOCK_EXIT_CODES } from './mockData';
-
-// Check if mock mode is enabled via window.kbase.task_browser.mockMode
-const isMockMode = (): boolean => {
-  const win = window as unknown as Record<string, unknown>;
-  const kbase = win.kbase as Record<string, unknown> | undefined;
-  const cts = kbase?.task_browser as { mockMode?: boolean } | undefined;
-  return cts?.mockMode === true;
-};
+import { getToken, isMockMode } from '../auth/token';
 
 // API fetch helpers
-async function fetchApi<T>(endpoint: string, token?: string): Promise<T> {
+async function fetchApi<T>(endpoint: string): Promise<T> {
+  const token = getToken();
   const headers: HeadersInit = {};
   if (token) {
     // CTS API requires "Bearer <token>" format
@@ -44,11 +38,8 @@ async function fetchApi<T>(endpoint: string, token?: string): Promise<T> {
   return response.json();
 }
 
-async function putApi<T>(
-  endpoint: string,
-  token?: string,
-  body?: unknown
-): Promise<T> {
+async function putApi<T>(endpoint: string, body?: unknown): Promise<T> {
+  const token = getToken();
   const headers: HeadersInit = {
     'Content-Type': 'application/json'
   };
@@ -97,10 +88,7 @@ interface IJobsApiResponse {
 }
 
 // API Functions
-export async function fetchJobs(
-  filters: IJobFilters = {},
-  token?: string
-): Promise<IJob[]> {
+export async function fetchJobs(filters: IJobFilters = {}): Promise<IJob[]> {
   // Return mock data if mock mode enabled
   if (isMockMode()) {
     let jobs = [...MOCK_JOBS];
@@ -120,18 +108,14 @@ export async function fetchJobs(
 
   const queryString = buildJobsQueryString(filters);
   const response = await fetchApi<IJobsApiResponse | IJob[]>(
-    `/jobs/${queryString}`,
-    token
+    `/jobs/${queryString}`
   );
 
   // Handle both array and object response formats
   return Array.isArray(response) ? response : response.jobs;
 }
 
-export async function fetchJobDetail(
-  jobId: string,
-  token?: string
-): Promise<IJob> {
+export async function fetchJobDetail(jobId: string): Promise<IJob> {
   // Return mock data if mock mode enabled
   if (isMockMode()) {
     const job = MOCK_JOBS.find(j => j.id === jobId);
@@ -141,13 +125,10 @@ export async function fetchJobDetail(
     return job;
   }
 
-  return fetchApi<IJob>(`/jobs/${jobId}`, token);
+  return fetchApi<IJob>(`/jobs/${jobId}`);
 }
 
-export async function fetchJobStatus(
-  jobId: string,
-  token?: string
-): Promise<IJobStatus> {
+export async function fetchJobStatus(jobId: string): Promise<IJobStatus> {
   // Return mock data if mock mode enabled
   if (isMockMode()) {
     const job = MOCK_JOBS.find(j => j.id === jobId);
@@ -157,10 +138,10 @@ export async function fetchJobStatus(
     return { id: job.id, state: job.state };
   }
 
-  return fetchApi<IJobStatus>(`/jobs/${jobId}/status`, token);
+  return fetchApi<IJobStatus>(`/jobs/${jobId}/status`);
 }
 
-export async function cancelJob(jobId: string, token?: string): Promise<IJob> {
+export async function cancelJob(jobId: string): Promise<IJob> {
   // Mock cancel - simulate state change
   if (isMockMode()) {
     const job = MOCK_JOBS.find(j => j.id === jobId);
@@ -171,26 +152,22 @@ export async function cancelJob(jobId: string, token?: string): Promise<IJob> {
     return { ...job, state: 'canceling' };
   }
 
-  return putApi<IJob>(`/jobs/${jobId}/cancel`, token);
+  return putApi<IJob>(`/jobs/${jobId}/cancel`);
 }
 
-export async function fetchJobExitCodes(
-  jobId: string,
-  token?: string
-): Promise<IExitCode[]> {
+export async function fetchJobExitCodes(jobId: string): Promise<IExitCode[]> {
   // Return mock exit codes
   if (isMockMode()) {
     return MOCK_EXIT_CODES[jobId] || [];
   }
 
-  return fetchApi<IExitCode[]>(`/jobs/${jobId}/exit_codes`, token);
+  return fetchApi<IExitCode[]>(`/jobs/${jobId}/exit_codes`);
 }
 
 export async function fetchJobLog(
   jobId: string,
   containerNum: number,
-  stream: 'stdout' | 'stderr',
-  token?: string
+  stream: 'stdout' | 'stderr'
 ): Promise<string> {
   // Return mock log data
   if (isMockMode()) {
@@ -201,6 +178,7 @@ export async function fetchJobLog(
     return '';
   }
 
+  const token = getToken();
   const response = await fetch(
     `${CTS_API_BASE}/jobs/${jobId}/log/${containerNum}/${stream}`,
     {
@@ -223,46 +201,45 @@ export async function fetchJobLog(
 
 // React Query Hooks
 
-export function useJobs(filters: IJobFilters = {}, token?: string) {
+export function useJobs(filters: IJobFilters = {}) {
+  const token = getToken();
   return useQuery({
     queryKey: ['jobs', filters, token],
-    queryFn: () => fetchJobs(filters, token),
+    queryFn: () => fetchJobs(filters),
     enabled: Boolean(token) || isMockMode(),
     refetchInterval: POLLING_INTERVAL_LIST,
     staleTime: 10000
   });
 }
 
-export function useJobDetail(jobId: string | null, token?: string) {
+export function useJobDetail(jobId: string | null) {
+  const token = getToken();
   return useQuery({
     queryKey: ['job', jobId, token],
-    queryFn: () => fetchJobDetail(jobId!, token),
+    queryFn: () => fetchJobDetail(jobId!),
     enabled: Boolean(jobId) && (Boolean(token) || isMockMode()),
     staleTime: 5000
   });
 }
 
-export function useJobStatus(
-  jobId: string | null,
-  token?: string,
-  currentState?: JobState
-) {
+export function useJobStatus(jobId: string | null, currentState?: JobState) {
+  const token = getToken();
   const shouldPoll = currentState ? !isTerminalState(currentState) : true;
 
   return useQuery({
     queryKey: ['job-status', jobId, token],
-    queryFn: () => fetchJobStatus(jobId!, token),
+    queryFn: () => fetchJobStatus(jobId!),
     enabled: Boolean(jobId) && (Boolean(token) || isMockMode()),
     refetchInterval: shouldPoll ? POLLING_INTERVAL_ACTIVE : false,
     staleTime: 2000
   });
 }
 
-export function useCancelJob(token?: string) {
+export function useCancelJob() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (jobId: string) => cancelJob(jobId, token),
+    mutationFn: (jobId: string) => cancelJob(jobId),
     onSuccess: (data, jobId) => {
       // Invalidate job queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['job', jobId] });
@@ -272,14 +249,11 @@ export function useCancelJob(token?: string) {
   });
 }
 
-export function useJobExitCodes(
-  jobId: string | null,
-  token?: string,
-  enabled = true
-) {
+export function useJobExitCodes(jobId: string | null, enabled = true) {
+  const token = getToken();
   return useQuery({
     queryKey: ['job-exit-codes', jobId, token],
-    queryFn: () => fetchJobExitCodes(jobId!, token),
+    queryFn: () => fetchJobExitCodes(jobId!),
     enabled: Boolean(jobId) && (Boolean(token) || isMockMode()) && enabled,
     staleTime: Infinity // Exit codes don't change
   });
@@ -289,12 +263,12 @@ export function useJobLog(
   jobId: string | null,
   containerNum: number,
   stream: 'stdout' | 'stderr',
-  token?: string,
   enabled = false
 ) {
+  const token = getToken();
   return useQuery({
     queryKey: ['job-log', jobId, containerNum, stream, token],
-    queryFn: () => fetchJobLog(jobId!, containerNum, stream, token),
+    queryFn: () => fetchJobLog(jobId!, containerNum, stream),
     enabled: Boolean(jobId) && (Boolean(token) || isMockMode()) && enabled,
     staleTime: 30000 // Cache logs for 30 seconds
   });

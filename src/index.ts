@@ -3,7 +3,6 @@ import {
   JupyterFrontEndPlugin,
   ILayoutRestorer
 } from '@jupyterlab/application';
-import { PageConfig } from '@jupyterlab/coreutils';
 import { IStateDB } from '@jupyterlab/statedb';
 import { INotebookTracker } from '@jupyterlab/notebook';
 
@@ -17,6 +16,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CTSBrowser } from './components/CTSBrowser';
 import { JobEmbedWidget } from './components/JobEmbedWidget';
 import { faListCheck } from '@fortawesome/free-solid-svg-icons';
+import { getToken } from './auth/token';
 
 // Shared MUI theme for sidebar and embedded widgets
 const theme = createTheme();
@@ -55,40 +55,10 @@ export function registerSelectJobCallback(
 // CTS namespace for console commands and shared state
 interface ICTSNamespace {
   mockMode: boolean;
-  token: string | null;
+  getToken: () => string;
   app: JupyterFrontEnd | null;
   selectJob: ((jobId: string) => void) | null;
   renderJobWidget: ((element: HTMLElement, jobId: string) => () => void) | null;
-}
-
-/**
- * Get KBase auth token from available sources.
- *
- * Token sources (checked in order):
- * 1. kbase_session cookie - set by JupyterHub in production
- * 2. PageConfig kbaseAuthToken - set from KBASE_AUTH_TOKEN env var in dev
- *
- * The token is stored in window.kbase.task_browser.token by registerCTSNamespace()
- * and read by components via getToken() in CTSBrowser.tsx.
- */
-function getAuthToken(): string | null {
-  // Production: JupyterHub sets kbase_session cookie on login
-  const cookies = document.cookie.split(';');
-  for (const cookie of cookies) {
-    const [name, value] = cookie.trim().split('=');
-    if (name === 'kbase_session') {
-      return value;
-    }
-  }
-
-  // Development: KBASE_AUTH_TOKEN env var exposed via server extension
-  // (see berdl_task_browser/__init__.py)
-  const tokenFromConfig = PageConfig.getOption('kbaseAuthToken');
-  if (tokenFromConfig) {
-    return tokenFromConfig;
-  }
-
-  return null;
 }
 
 /**
@@ -103,7 +73,6 @@ function renderJobWidget(element: HTMLElement, jobId: string): () => void {
     return () => {};
   }
 
-  const token = getAuthToken();
   const root: Root = createRoot(element);
 
   root.render(
@@ -113,7 +82,7 @@ function renderJobWidget(element: HTMLElement, jobId: string): () => void {
       React.createElement(
         QueryClientProvider,
         { client: sharedQueryClient },
-        React.createElement(JobEmbedWidget, { jobId, token })
+        React.createElement(JobEmbedWidget, { jobId })
       )
     )
   );
@@ -128,13 +97,12 @@ function renderJobWidget(element: HTMLElement, jobId: string): () => void {
  * Register window.kbase.task_browser namespace for shared state and console access.
  *
  * This namespace serves as:
- * 1. Single source of truth for auth token (read by components via getToken())
- * 2. Bridge for Python widget (show_job) to render React components
- * 3. Console debugging interface
+ * 1. Bridge for Python widget (show_job) to render React components
+ * 2. Console debugging interface
  *
  * Console usage:
  *   window.kbase.task_browser.mockMode = true         // Enable mock mode
- *   window.kbase.task_browser.token                   // View current auth token
+ *   window.kbase.task_browser.getToken()              // Get current auth token
  *   window.kbase.task_browser.app                     // JupyterLab app instance
  *   window.kbase.task_browser.selectJob(id)           // Select job in sidebar
  *   window.kbase.task_browser.renderJobWidget(el, id) // Render widget into DOM element
@@ -143,11 +111,9 @@ function registerCTSNamespace(app: JupyterFrontEnd): void {
   const win = window as unknown as Record<string, unknown>;
   const existing = (win.kbase as Record<string, unknown>) || {};
 
-  const token = getAuthToken();
-
   const ctsNamespace: ICTSNamespace = {
     mockMode: false,
-    token: token,
+    getToken: getToken,
     app: app,
     selectJob: null,
     renderJobWidget: renderJobWidget
@@ -155,9 +121,10 @@ function registerCTSNamespace(app: JupyterFrontEnd): void {
 
   win.kbase = {
     ...existing,
-    cts: ctsNamespace
+    task_browser: ctsNamespace
   };
 
+  const token = getToken();
   console.log(
     '[CTS] Namespace registered. Token:',
     token ? 'found' : 'not found'

@@ -13,6 +13,7 @@ import { JobList } from './JobList';
 import { JobDetail } from './JobDetail';
 import { JobWizard } from './JobWizard';
 import { registerSelectJobCallback } from '../index';
+import { getToken } from '../auth/token';
 
 export interface ICTSBrowserProps {
   jupyterApp: JupyterFrontEnd;
@@ -21,30 +22,12 @@ export interface ICTSBrowserProps {
   notebookTracker: INotebookTracker | null;
 }
 
-/**
- * Get auth token from window.kbase.task_browser namespace.
- *
- * Token source (set by registerCTSNamespace in index.ts):
- * - Production (JupyterHub): kbase_session cookie
- * - Development: KBASE_AUTH_TOKEN env var via PageConfig
- *
- * Called as a function (not stored as constant) to always get current value.
- */
-function getToken(): string {
-  const win = window as unknown as Record<string, unknown>;
-  const kbase = win.kbase as Record<string, unknown> | undefined;
-  const cts = kbase?.task_browser as { token?: string } | undefined;
-  return cts?.token || '';
-}
-
 export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
   jupyterApp,
   restorer,
   stateDB,
   notebookTracker
 }) => {
-  // Get token fresh on each render from window.kbase.task_browser namespace
-  const token = getToken();
   const [filters, setFilters] = useState<IJobFilters>({});
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -56,9 +39,8 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
     });
   }, []);
 
-  // Queries - pass token to all hooks
-  const jobsQuery = useJobs(filters, token);
-  const jobDetailQuery = useJobDetail(selectedJobId, token);
+  const jobsQuery = useJobs(filters);
+  const jobDetailQuery = useJobDetail(selectedJobId);
 
   // Handlers
   const handleFiltersChange = useCallback((newFilters: IJobFilters) => {
@@ -134,7 +116,7 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
 
       {/* Job List */}
       <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-        {!token ? (
+        {!getToken() ? (
           <Box sx={{ p: 1, textAlign: 'center' }}>
             <Typography sx={{ fontSize: '0.7rem' }} color="text.secondary">
               No auth token found. Set KBASE_AUTH_TOKEN environment variable.
@@ -168,7 +150,6 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
             isLoading={jobDetailQuery.isLoading}
             error={jobDetailQuery.error}
             onClose={handleCloseDetail}
-            token={token}
           />
         </Box>
       )}
