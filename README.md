@@ -55,8 +55,43 @@ You can watch the source directory and run JupyterLab at the same time in differ
 # Watch the source directory in one terminal, automatically rebuilding when needed
 uv run jlpm watch
 # Run JupyterLab in another terminal
-KBASE_AUTH_TOKEN=your-token uv run jupyter lab
+KBASE_AUTH_TOKEN=your-token \
+CDM_TASK_SERVICE_URL=https://ci.kbase.us/services/cts \
+uv run jupyter lab
 ```
+
+#### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `KBASE_AUTH_TOKEN` | Auth token for CTS API (required) |
+| `CDM_TASK_SERVICE_URL` | CTS API endpoint (defaults to CI) |
+| `CTS_MOCK_MODE` | Set to `true` to enable mock mode |
+
+#### Mock Mode
+
+For development without a real CTS API, enable mock mode:
+
+```bash
+CTS_MOCK_MODE=true uv run jupyter lab
+```
+
+Or toggle at runtime in browser console:
+```javascript
+window.kbase.task_browser.mockMode = true
+```
+
+Mock mode uses [MSW (Mock Service Worker)](https://mswjs.io/) to intercept API requests and return test data.
+
+#### CORS Proxy (Alternative)
+
+If you need to test against the real CTS API from localhost:
+
+```bash
+uv run python scripts/cts_proxy.py
+```
+
+This starts a CORS-enabled proxy on `localhost:8080`.
 
 With the watch command running, every saved change will immediately be built locally and available in your running JupyterLab. Refresh JupyterLab to load the change in your browser (you may need to wait several seconds for the extension to be rebuilt).
 
