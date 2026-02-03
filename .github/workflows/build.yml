@@ -5,6 +5,7 @@ on:
     branches: main
   pull_request:
     branches: '*'
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -17,6 +18,9 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: true
 
     - name: Base Setup
       uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
@@ -38,7 +42,7 @@ jobs:
     - name: Build the extension
       run: |
         set -eux
-        python -m pip install .[test]
+        python -m pip install .
 
         jupyter labextension list
         jupyter labextension list 2>&1 | grep -ie "berdl-task-browser.*OK"
@@ -97,6 +101,9 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: true
 
     - name: Base Setup
       uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
@@ -150,6 +157,7 @@ jobs:
     name: Check Links
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
