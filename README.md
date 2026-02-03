@@ -1,6 +1,6 @@
 # berdl_task_browser
 
-[![Github Actions Status](https://github.com/kbaseincubator/berdl-task-browser/workflows/Build/badge.svg)](https://github.com/kbaseincubator/berdl-task-browser/actions/workflows/build.yml)
+[![Github Actions Status](https://github.com/BERDataLakehouse/berdl_task_browser/workflows/Build/badge.svg)](https://github.com/BERDataLakehouse/berdl_task_browser/actions/workflows/build.yml)
 
 A JupyterLab extension for browsing CTS data
 

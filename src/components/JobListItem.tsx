@@ -85,7 +85,14 @@ export const JobListItem: React.FC<IJobListItemProps> = ({
             {getLastUpdateTime(job)}
           </Typography>
         </Box>
-        <Box sx={{ mt: 0.25, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box
+          sx={{
+            mt: 0.25,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}
+        >
           <StatusChip state={job.state} />
           {job.cluster && (
             <Chip

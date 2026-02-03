@@ -51,14 +51,22 @@ export const JobEmbedWidget: React.FC<IJobEmbedWidgetProps> = ({
   jobId,
   token
 }) => {
-  const { data: job, isLoading, error } = useJobDetail(jobId, token || undefined);
+  const {
+    data: job,
+    isLoading,
+    error
+  } = useJobDetail(jobId, token || undefined);
 
   const handleViewInfo = () => {
     const win = window as unknown as Record<string, unknown>;
     const kbase = win.kbase as Record<string, unknown> | undefined;
-    const cts = kbase?.cts as {
-      app?: { commands?: { execute: (cmd: string, args: unknown) => void } };
-    } | undefined;
+    const cts = kbase?.cts as
+      | {
+          app?: {
+            commands?: { execute: (cmd: string, args: unknown) => void };
+          };
+        }
+      | undefined;
 
     if (cts?.app?.commands) {
       cts.app.commands.execute('task-browser:select-job', { jobId });
@@ -117,9 +125,7 @@ export const JobEmbedWidget: React.FC<IJobEmbedWidgetProps> = ({
 
           {/* Relative time */}
           {getLastUpdateTime(job) && (
-            <Typography
-              sx={{ fontSize: '0.6rem', color: 'text.secondary' }}
-            >
+            <Typography sx={{ fontSize: '0.6rem', color: 'text.secondary' }}>
               {getLastUpdateTime(job)}
             </Typography>
           )}
@@ -128,12 +134,11 @@ export const JobEmbedWidget: React.FC<IJobEmbedWidgetProps> = ({
 
       {/* View info button */}
       <Tooltip title="View in sidebar">
-        <IconButton
-          size="small"
-          onClick={handleViewInfo}
-          sx={{ p: 0.25 }}
-        >
-          <FontAwesomeIcon icon={faCircleInfo} style={{ fontSize: '0.75rem' }} />
+        <IconButton size="small" onClick={handleViewInfo} sx={{ p: 0.25 }}>
+          <FontAwesomeIcon
+            icon={faCircleInfo}
+            style={{ fontSize: '0.75rem' }}
+          />
         </IconButton>
       </Tooltip>
     </Box>

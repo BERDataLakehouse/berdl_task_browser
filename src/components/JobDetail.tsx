@@ -124,7 +124,9 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
   const canCancel = isCancelableState(job.state);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
+    <Box
+      sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}
+    >
       {/* Fixed Header */}
       <Box
         sx={{
@@ -269,7 +271,6 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
               <Typography sx={valueSx}>{job.max_memory}</Typography>
             </Box>
           )}
-
         </Box>
 
         {/* Job ID - full width */}

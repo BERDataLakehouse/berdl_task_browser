@@ -10,6 +10,6 @@ kind: frontend
 labextension_name: berdl-task-browser
 project_short_description: A JupyterLab extension for browsing task data
 python_name: berdl_task_browser
-repository: https://github.com/kbaseincubator/berdl-task-browser
+repository: https://github.com/BERDataLakehouse/berdl_task_browser
 test: true
 
