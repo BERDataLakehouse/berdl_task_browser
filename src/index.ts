@@ -30,13 +30,11 @@ const ICON_ID = `${EXTENSION_ID}:icon`;
 const PANEL_ID = `${EXTENSION_ID}-panel`;
 const COMMAND_SELECT_JOB = 'task-browser:select-job';
 
-// Create LabIcon from FontAwesome icon
 const browserIcon = new LabIcon({
   name: ICON_ID,
   svgstr: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${faListCheck.icon[0]} ${faListCheck.icon[1]}"><path fill="currentColor" d="${faListCheck.icon[4]}"/></svg>`
 });
 
-// Get CTS namespace from window
 function getCTSNamespace(): ICTSNamespace | null {
   const win = window as unknown as Record<string, unknown>;
   const kbase = win.kbase as Record<string, unknown> | undefined;
@@ -52,7 +50,6 @@ export function registerSelectJobCallback(
   }
 }
 
-// CTS namespace for console commands and shared state
 interface ICTSNamespace {
   mockMode: boolean;
   getToken: () => string;
@@ -87,7 +84,6 @@ function renderJobWidget(element: HTMLElement, jobId: string): () => void {
     )
   );
 
-  // Return cleanup function
   return () => {
     root.unmount();
   };
@@ -148,7 +144,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
   ) => {
     console.log('JupyterLab extension berdl-task-browser is activated!');
 
-    // Register CTS namespace on window.kbase.task_browser
     registerCTSNamespace(app);
 
     // Create QueryClient for React Query (shared for embedded widgets)
@@ -162,7 +157,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
     });
     sharedQueryClient = queryClient;
 
-    // Create a React widget wrapped with QueryClientProvider
     const widget = ReactWidget.create(
       React.createElement(
         QueryClientProvider,
@@ -176,19 +170,16 @@ const plugin: JupyterFrontEndPlugin<void> = {
       )
     );
 
-    // Create sidebar panel
     const panel = new Panel();
     panel.id = PANEL_ID;
     panel.title.closable = true;
     panel.title.icon = browserIcon;
     panel.title.label = '';
 
-    // Configure widget styling
     widget.addClass('jp-CTSBrowserWidget-root');
     widget.node.style.height = '100%';
     widget.node.style.overflow = 'hidden';
 
-    // Assemble and register panel
     panel.addWidget(widget);
     app.shell.add(panel, 'left', { rank: 1 });
     restorer.add(panel, PANEL_ID);
@@ -203,10 +194,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
           return;
         }
 
-        // Activate the sidebar panel
         app.shell.activateById(panel.id);
 
-        // Select the job in the browser
         const cts = getCTSNamespace();
         if (cts?.selectJob) {
           cts.selectJob(jobId);

@@ -27,13 +27,11 @@ interface IJobDetailProps {
   onClose: () => void;
 }
 
-// Format ISO timestamp to readable format
 const formatTimestamp = (isoString: string): string => {
   const date = new Date(isoString);
   return date.toLocaleString();
 };
 
-// State transition timeline component
 const StateTimeline: React.FC<{ transitions: ITransitionTime[] }> = ({
   transitions
 }) => {

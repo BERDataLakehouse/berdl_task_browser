@@ -15,7 +15,6 @@ export interface IJobEmbedWidgetProps {
   jobId: string;
 }
 
-// Format timestamp to relative time (same as JobListItem)
 const formatRelativeTime = (isoString: string): string => {
   const date = new Date(isoString);
   const now = new Date();
@@ -36,7 +35,6 @@ const formatRelativeTime = (isoString: string): string => {
   return `${diffDays}d ago`;
 };
 
-// Get the most recent transition time
 const getLastUpdateTime = (job: IJob): string => {
   if (job.transition_times && job.transition_times.length > 0) {
     const lastTransition =

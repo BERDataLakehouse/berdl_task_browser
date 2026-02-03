@@ -7,7 +7,6 @@ interface IStatusChipProps {
   size?: 'small' | 'medium';
 }
 
-// Map job states to display labels
 const STATE_LABELS: Record<JobState, string> = {
   created: 'Created',
   download_submitted: 'Downloading',
@@ -23,7 +22,6 @@ const STATE_LABELS: Record<JobState, string> = {
   canceled: 'Canceled'
 };
 
-// Map job states to colors
 type ChipColor =
   | 'default'
   | 'primary'

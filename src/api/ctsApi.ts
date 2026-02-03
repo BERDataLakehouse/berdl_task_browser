@@ -60,7 +60,6 @@ async function putApi<T>(endpoint: string, body?: unknown): Promise<T> {
   return response.json();
 }
 
-// Build query string from filters
 function buildJobsQueryString(filters: IJobFilters): string {
   const params = new URLSearchParams();
 
@@ -87,18 +86,14 @@ interface IJobsApiResponse {
   jobs: IJob[];
 }
 
-// API Functions
 export async function fetchJobs(filters: IJobFilters = {}): Promise<IJob[]> {
-  // Return mock data if mock mode enabled
   if (isMockMode()) {
     let jobs = [...MOCK_JOBS];
 
-    // Apply state filter
     if (filters.state) {
       jobs = jobs.filter(job => job.state === filters.state);
     }
 
-    // Apply cluster filter
     if (filters.cluster) {
       jobs = jobs.filter(job => job.cluster === filters.cluster);
     }
@@ -116,7 +111,6 @@ export async function fetchJobs(filters: IJobFilters = {}): Promise<IJob[]> {
 }
 
 export async function fetchJobDetail(jobId: string): Promise<IJob> {
-  // Return mock data if mock mode enabled
   if (isMockMode()) {
     const job = MOCK_JOBS.find(j => j.id === jobId);
     if (!job) {
@@ -129,7 +123,6 @@ export async function fetchJobDetail(jobId: string): Promise<IJob> {
 }
 
 export async function fetchJobStatus(jobId: string): Promise<IJobStatus> {
-  // Return mock data if mock mode enabled
   if (isMockMode()) {
     const job = MOCK_JOBS.find(j => j.id === jobId);
     if (!job) {
@@ -156,7 +149,6 @@ export async function cancelJob(jobId: string): Promise<IJob> {
 }
 
 export async function fetchJobExitCodes(jobId: string): Promise<IExitCode[]> {
-  // Return mock exit codes
   if (isMockMode()) {
     return MOCK_EXIT_CODES[jobId] || [];
   }
@@ -169,7 +161,6 @@ export async function fetchJobLog(
   containerNum: number,
   stream: 'stdout' | 'stderr'
 ): Promise<string> {
-  // Return mock log data
   if (isMockMode()) {
     const jobLogs = MOCK_LOGS[jobId];
     if (jobLogs && jobLogs[containerNum]) {
