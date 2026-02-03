@@ -9,54 +9,19 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { useJobDetail } from '../api/ctsApi';
 import { StatusChip } from './StatusChip';
-import { IJob } from '../types/jobs';
+import { getLastUpdateTime } from '../utils/dateUtils';
+import { IKBaseWindow } from '../index';
 
 export interface IJobEmbedWidgetProps {
   jobId: string;
 }
 
-const formatRelativeTime = (isoString: string): string => {
-  const date = new Date(isoString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMins < 1) {
-    return 'just now';
-  }
-  if (diffMins < 60) {
-    return `${diffMins}m ago`;
-  }
-  if (diffHours < 24) {
-    return `${diffHours}h ago`;
-  }
-  return `${diffDays}d ago`;
-};
-
-const getLastUpdateTime = (job: IJob): string => {
-  if (job.transition_times && job.transition_times.length > 0) {
-    const lastTransition =
-      job.transition_times[job.transition_times.length - 1];
-    return formatRelativeTime(lastTransition.time);
-  }
-  return '';
-};
-
 export const JobEmbedWidget: React.FC<IJobEmbedWidgetProps> = ({ jobId }) => {
   const { data: job, isLoading, error } = useJobDetail(jobId);
 
   const handleViewInfo = () => {
-    const win = window as unknown as Record<string, unknown>;
-    const kbase = win.kbase as Record<string, unknown> | undefined;
-    const cts = kbase?.task_browser as
-      | {
-          app?: {
-            commands?: { execute: (cmd: string, args: unknown) => void };
-          };
-        }
-      | undefined;
+    const win = window as unknown as IKBaseWindow;
+    const cts = win.kbase?.task_browser;
 
     if (cts?.app?.commands) {
       cts.app.commands.execute('task-browser:select-job', { jobId });
@@ -100,9 +65,9 @@ export const JobEmbedWidget: React.FC<IJobEmbedWidgetProps> = ({ jobId }) => {
           </Typography>
 
           {/* Cluster chip */}
-          {job.cluster && (
+          {job.job_input?.cluster && (
             <Chip
-              label={job.cluster}
+              label={job.job_input.cluster}
               size="small"
               variant="outlined"
               sx={{

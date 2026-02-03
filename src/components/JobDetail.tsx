@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -6,7 +6,8 @@ import {
   Alert,
   IconButton,
   Button,
-  Chip
+  Chip,
+  Link
 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faBan } from '@fortawesome/free-solid-svg-icons';
@@ -19,6 +20,7 @@ import {
 import { StatusChip } from './StatusChip';
 import { LogViewer } from './LogViewer';
 import { useCancelJob, useJobExitCodes } from '../api/ctsApi';
+import { MAX_DISPLAYED_OUTPUTS } from '../config';
 
 interface IJobDetailProps {
   job: IJob | undefined;
@@ -75,6 +77,7 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
   error,
   onClose
 }) => {
+  const [showAllOutputs, setShowAllOutputs] = useState(false);
   const cancelMutation = useCancelJob();
   const exitCodesQuery = useJobExitCodes(
     job?.id || null,
@@ -153,6 +156,7 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
         <IconButton
           size="small"
           onClick={onClose}
+          aria-label="Close job details"
           sx={{ p: 0.25, opacity: 0.6, '&:hover': { opacity: 1 } }}
         >
           <FontAwesomeIcon icon={faTimes} style={{ fontSize: '0.6rem' }} />
@@ -216,11 +220,11 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
           )}
 
           {/* Cluster */}
-          {job.cluster && (
+          {job.job_input?.cluster && (
             <Box>
               <Typography sx={labelSx}>Cluster</Typography>
               <Chip
-                label={job.cluster}
+                label={job.job_input.cluster}
                 size="small"
                 variant="outlined"
                 sx={{
@@ -344,7 +348,10 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
           <Box sx={{ mb: 0.75 }}>
             <Typography sx={labelSx}>Outputs ({job.outputs.length})</Typography>
             <Box sx={{ pl: 0.5 }}>
-              {job.outputs.slice(0, 5).map((output, index) => (
+              {(showAllOutputs
+                ? job.outputs
+                : job.outputs.slice(0, MAX_DISPLAYED_OUTPUTS)
+              ).map((output, index) => (
                 <Box key={index} sx={{ py: 0.125 }}>
                   <Typography
                     sx={{
@@ -355,25 +362,22 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
                   >
                     {output.file}
                   </Typography>
-                  {output.data_id && (
-                    <Typography
-                      sx={{
-                        fontSize: '0.55rem',
-                        color: 'text.secondary',
-                        fontFamily: 'monospace'
-                      }}
-                    >
-                      {output.data_id}
-                    </Typography>
-                  )}
                 </Box>
               ))}
-              {job.outputs.length > 5 && (
-                <Typography
-                  sx={{ fontSize: '0.55rem', color: 'text.secondary' }}
+              {job.outputs.length > MAX_DISPLAYED_OUTPUTS && (
+                <Link
+                  component="button"
+                  onClick={() => setShowAllOutputs(!showAllOutputs)}
+                  sx={{
+                    fontSize: '0.55rem',
+                    color: 'primary.main',
+                    cursor: 'pointer'
+                  }}
                 >
-                  ... and {job.outputs.length - 5} more
-                </Typography>
+                  {showAllOutputs
+                    ? 'Show less'
+                    : `Show all ${job.outputs.length} outputs`}
+                </Link>
               )}
             </Box>
           </Box>

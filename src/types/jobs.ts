@@ -3,19 +3,25 @@
  * Based on https://ci.kbase.us/services/cts/openapi.json
  */
 
-export type JobState =
-  | 'created'
-  | 'download_submitted'
-  | 'job_submitting'
-  | 'job_submitted'
-  | 'upload_submitting'
-  | 'upload_submitted'
-  | 'complete'
-  | 'error_processing_submitting'
-  | 'error_processing_submitted'
-  | 'error'
-  | 'canceling'
-  | 'canceled';
+/**
+ * All possible job states as a const array for iteration
+ */
+export const JOB_STATES = [
+  'created',
+  'download_submitted',
+  'job_submitting',
+  'job_submitted',
+  'upload_submitting',
+  'upload_submitted',
+  'complete',
+  'error_processing_submitting',
+  'error_processing_submitted',
+  'error',
+  'canceling',
+  'canceled'
+] as const;
+
+export type JobState = (typeof JOB_STATES)[number];
 
 export interface ITransitionTime {
   state: JobState;
@@ -24,16 +30,43 @@ export interface ITransitionTime {
 
 export interface IJobOutput {
   file: string;
-  data_id?: string;
   crc64nvme?: string;
 }
 
 export interface IJobImage {
   name: string;
-  digest?: string;
+  digest: string;
+  entrypoint: string[];
+  registered_by: string;
+  registered_on: string;
   tag?: string;
-  entrypoint?: string;
   refdata_id?: string;
+  default_refdata_mount_point?: string;
+}
+
+export interface ISite {
+  cluster: string;
+  nodes: number | null;
+  cpus_per_node: number;
+  memory_per_node_gb: number;
+  max_runtime_min: number;
+  notes: string[];
+  active: boolean;
+  available: boolean;
+  unavailable_reason?: string;
+}
+
+export interface IJobInput {
+  cluster: string;
+  image: string;
+  params?: Record<string, unknown>;
+  num_containers?: number;
+  cpus?: number;
+  memory?: string;
+  runtime?: number;
+  input_roots?: string[];
+  output_dir?: string;
+  input_files?: string[];
 }
 
 export interface IJob {
@@ -47,11 +80,10 @@ export interface IJob {
   error?: string;
   outputs?: IJobOutput[];
   image?: IJobImage;
-  job_input?: string;
+  job_input?: IJobInput;
   cpu_factor?: number;
   max_memory?: string;
   logpath?: string;
-  cluster?: string;
 }
 
 export interface IJobStatus {

@@ -13,49 +13,56 @@ import {
   IJob,
   IJobStatus,
   IJobFilters,
+  ISite,
   JobState,
   IExitCode,
   isTerminalState
 } from '../types/jobs';
-import { MOCK_JOBS, MOCK_LOGS, MOCK_EXIT_CODES } from './mockData';
-import { getToken, isMockMode } from '../auth/token';
+import { getToken, isMockMode, getAuthHeader } from '../auth/token';
+
+// HTTP error messages for user-friendly display
+const HTTP_ERROR_MESSAGES: Record<number, string> = {
+  401: 'Authentication failed. Please check your token.',
+  403: 'Permission denied.',
+  404: 'Resource not found.',
+  500: 'Server error. Please try again later.'
+};
+
+function getErrorMessage(status: number, statusText: string): string {
+  return HTTP_ERROR_MESSAGES[status] || `API error: ${status} ${statusText}`;
+}
 
 // API fetch helpers
 async function fetchApi<T>(endpoint: string): Promise<T> {
-  const token = getToken();
-  const headers: HeadersInit = {};
-  if (token) {
-    // CTS API requires "Bearer <token>" format
-    headers['Authorization'] = token.startsWith('Bearer ')
-      ? token
-      : `Bearer ${token}`;
+  const url = `${CTS_API_BASE}${endpoint}`;
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      headers: getAuthHeader()
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    throw new Error(`Network error fetching ${url}: ${msg}`);
   }
-
-  const response = await fetch(`${CTS_API_BASE}${endpoint}`, { headers });
   if (!response.ok) {
-    throw new Error(`API error: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `${getErrorMessage(response.status, response.statusText)} (${url})`
+    );
   }
   return response.json();
 }
 
 async function putApi<T>(endpoint: string, body?: unknown): Promise<T> {
-  const token = getToken();
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json'
-  };
-  if (token) {
-    headers['Authorization'] = token.startsWith('Bearer ')
-      ? token
-      : `Bearer ${token}`;
-  }
-
   const response = await fetch(`${CTS_API_BASE}${endpoint}`, {
     method: 'PUT',
-    headers,
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    },
     body: body ? JSON.stringify(body) : undefined
   });
   if (!response.ok) {
-    throw new Error(`API error: ${response.status} ${response.statusText}`);
+    throw new Error(getErrorMessage(response.status, response.statusText));
   }
   return response.json();
 }
@@ -87,73 +94,43 @@ interface IJobsApiResponse {
 }
 
 export async function fetchJobs(filters: IJobFilters = {}): Promise<IJob[]> {
-  if (isMockMode()) {
-    let jobs = [...MOCK_JOBS];
-
-    if (filters.state) {
-      jobs = jobs.filter(job => job.state === filters.state);
-    }
-
-    if (filters.cluster) {
-      jobs = jobs.filter(job => job.cluster === filters.cluster);
-    }
-
-    return jobs.slice(0, filters.limit || DEFAULT_JOB_LIMIT);
-  }
-
   const queryString = buildJobsQueryString(filters);
-  const response = await fetchApi<IJobsApiResponse | IJob[]>(
-    `/jobs/${queryString}`
-  );
-
-  // Handle both array and object response formats
-  return Array.isArray(response) ? response : response.jobs;
+  const response = await fetchApi<IJobsApiResponse>(`/jobs/${queryString}`);
+  return response.jobs;
 }
 
 export async function fetchJobDetail(jobId: string): Promise<IJob> {
-  if (isMockMode()) {
-    const job = MOCK_JOBS.find(j => j.id === jobId);
-    if (!job) {
-      throw new Error(`Job not found: ${jobId}`);
-    }
-    return job;
-  }
-
   return fetchApi<IJob>(`/jobs/${jobId}`);
 }
 
 export async function fetchJobStatus(jobId: string): Promise<IJobStatus> {
-  if (isMockMode()) {
-    const job = MOCK_JOBS.find(j => j.id === jobId);
-    if (!job) {
-      throw new Error(`Job not found: ${jobId}`);
-    }
-    return { id: job.id, state: job.state };
-  }
-
   return fetchApi<IJobStatus>(`/jobs/${jobId}/status`);
 }
 
 export async function cancelJob(jobId: string): Promise<IJob> {
-  // Mock cancel - simulate state change
-  if (isMockMode()) {
-    const job = MOCK_JOBS.find(j => j.id === jobId);
-    if (!job) {
-      throw new Error(`Job not found: ${jobId}`);
-    }
-    // Return job with canceling state (mock doesn't actually mutate)
-    return { ...job, state: 'canceling' };
-  }
-
   return putApi<IJob>(`/jobs/${jobId}/cancel`);
 }
 
-export async function fetchJobExitCodes(jobId: string): Promise<IExitCode[]> {
-  if (isMockMode()) {
-    return MOCK_EXIT_CODES[jobId] || [];
-  }
+interface IExitCodesResponse {
+  exit_codes: (number | null)[];
+}
 
-  return fetchApi<IExitCode[]>(`/jobs/${jobId}/exit_codes`);
+export async function fetchJobExitCodes(jobId: string): Promise<IExitCode[]> {
+  const response = await fetchApi<IExitCodesResponse>(
+    `/jobs/${jobId}/exit_codes`
+  );
+  return response.exit_codes
+    .map((code, index) => ({ container_num: index, exit_code: code }))
+    .filter((ec): ec is IExitCode => ec.exit_code !== null);
+}
+
+interface ISitesResponse {
+  sites: ISite[];
+}
+
+export async function fetchSites(): Promise<ISite[]> {
+  const response = await fetchApi<ISitesResponse>('/sites/');
+  return response.sites;
 }
 
 export async function fetchJobLog(
@@ -161,36 +138,29 @@ export async function fetchJobLog(
   containerNum: number,
   stream: 'stdout' | 'stderr'
 ): Promise<string> {
-  if (isMockMode()) {
-    const jobLogs = MOCK_LOGS[jobId];
-    if (jobLogs && jobLogs[containerNum]) {
-      return jobLogs[containerNum][stream] || '';
-    }
-    return '';
-  }
-
-  const token = getToken();
   const response = await fetch(
     `${CTS_API_BASE}/jobs/${jobId}/log/${containerNum}/${stream}`,
-    {
-      headers: token
-        ? {
-            Authorization: token.startsWith('Bearer ')
-              ? token
-              : `Bearer ${token}`
-          }
-        : {}
-    }
+    { headers: getAuthHeader() }
   );
 
   if (!response.ok) {
-    throw new Error(`API error: ${response.status} ${response.statusText}`);
+    throw new Error(getErrorMessage(response.status, response.statusText));
   }
 
   return response.text();
 }
 
 // React Query Hooks
+
+export function useSites() {
+  const token = getToken();
+  return useQuery({
+    queryKey: ['sites', token],
+    queryFn: () => fetchSites(),
+    enabled: Boolean(token) || isMockMode(),
+    staleTime: 300000 // Sites don't change often, cache for 5 minutes
+  });
+}
 
 export function useJobs(filters: IJobFilters = {}) {
   const token = getToken();

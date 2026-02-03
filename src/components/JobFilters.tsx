@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Box,
   FormControl,
   Select,
   MenuItem,
   IconButton,
-  SelectChangeEvent
+  SelectChangeEvent,
+  Tooltip
 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
-import { JobState, IJobFilters } from '../types/jobs';
+import { JobState, IJobFilters, JOB_STATES } from '../types/jobs';
+import { useSites } from '../api/ctsApi';
 
 interface IJobFiltersProps {
   filters: IJobFilters;
@@ -20,24 +22,28 @@ interface IJobFiltersProps {
 
 type FilterStateValue = JobState | 'all';
 
+const formatStateLabel = (state: string): string => {
+  return state
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 const STATE_OPTIONS: { value: FilterStateValue; label: string }[] = [
   { value: 'all', label: 'All Jobs' },
-  { value: 'created', label: 'Created' },
-  { value: 'download_submitted', label: 'Downloading' },
-  { value: 'job_submitted', label: 'Running' },
-  { value: 'upload_submitted', label: 'Uploading' },
-  { value: 'complete', label: 'Complete' },
-  { value: 'error', label: 'Error' },
-  { value: 'canceling', label: 'Canceling' },
-  { value: 'canceled', label: 'Canceled' }
+  ...JOB_STATES.map(state => ({
+    value: state,
+    label: formatStateLabel(state)
+  }))
 ];
 
-const CLUSTER_OPTIONS: { value: string; label: string }[] = [
-  { value: 'all', label: 'All Clusters' },
-  { value: 'perlmutter', label: 'Perlmutter' },
-  { value: 'lawrencium', label: 'Lawrencium' },
-  { value: 'kbase', label: 'KBase' }
-];
+const formatClusterLabel = (cluster: string): string => {
+  return cluster
+    .replace(/-jaws$/, '')
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
 
 export const JobFilters: React.FC<IJobFiltersProps> = ({
   filters,
@@ -45,6 +51,32 @@ export const JobFilters: React.FC<IJobFiltersProps> = ({
   onRefresh,
   isRefreshing
 }) => {
+  const { data: sites } = useSites();
+
+  const clusterOptions = useMemo(() => {
+    const options: {
+      value: string;
+      label: string;
+      disabled?: boolean;
+      tooltip?: string;
+    }[] = [{ value: 'all', label: 'All Clusters' }];
+
+    if (sites) {
+      for (const site of sites) {
+        if (site.active) {
+          options.push({
+            value: site.cluster,
+            label: formatClusterLabel(site.cluster),
+            disabled: !site.available,
+            tooltip: site.unavailable_reason
+          });
+        }
+      }
+    }
+
+    return options;
+  }, [sites]);
+
   const handleStateChange = (event: SelectChangeEvent<string>) => {
     const value = event.target.value as FilterStateValue;
     onFiltersChange({
@@ -109,15 +141,34 @@ export const JobFilters: React.FC<IJobFiltersProps> = ({
             '& .MuiSelect-select': { py: 0.5, px: 1 }
           }}
         >
-          {CLUSTER_OPTIONS.map(option => (
-            <MenuItem
-              key={option.value}
-              value={option.value}
-              sx={{ fontSize: '0.7rem', py: 0.5, minHeight: 0 }}
-            >
-              {option.label}
-            </MenuItem>
-          ))}
+          {clusterOptions.map(option =>
+            option.tooltip ? (
+              <Tooltip
+                key={option.value}
+                title={option.tooltip}
+                placement="right"
+              >
+                <span>
+                  <MenuItem
+                    value={option.value}
+                    disabled={option.disabled}
+                    sx={{ fontSize: '0.7rem', py: 0.5, minHeight: 0 }}
+                  >
+                    {option.label}
+                  </MenuItem>
+                </span>
+              </Tooltip>
+            ) : (
+              <MenuItem
+                key={option.value}
+                value={option.value}
+                disabled={option.disabled}
+                sx={{ fontSize: '0.7rem', py: 0.5, minHeight: 0 }}
+              >
+                {option.label}
+              </MenuItem>
+            )
+          )}
         </Select>
       </FormControl>
 
@@ -125,7 +176,7 @@ export const JobFilters: React.FC<IJobFiltersProps> = ({
         onClick={onRefresh}
         disabled={isRefreshing}
         size="small"
-        title="Refresh"
+        aria-label="Refresh job list"
         sx={{
           p: 0.5,
           '&:hover': { bgcolor: 'action.hover' }

@@ -2,41 +2,13 @@ import React from 'react';
 import { ListItemButton, Box, Typography, Chip } from '@mui/material';
 import { IJob } from '../types/jobs';
 import { StatusChip } from './StatusChip';
+import { getLastUpdateTime } from '../utils/dateUtils';
 
 interface IJobListItemProps {
   job: IJob;
   selected: boolean;
   onClick: () => void;
 }
-
-const formatRelativeTime = (isoString: string): string => {
-  const date = new Date(isoString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMins < 1) {
-    return 'just now';
-  }
-  if (diffMins < 60) {
-    return `${diffMins}m ago`;
-  }
-  if (diffHours < 24) {
-    return `${diffHours}h ago`;
-  }
-  return `${diffDays}d ago`;
-};
-
-const getLastUpdateTime = (job: IJob): string => {
-  if (job.transition_times && job.transition_times.length > 0) {
-    const lastTransition =
-      job.transition_times[job.transition_times.length - 1];
-    return formatRelativeTime(lastTransition.time);
-  }
-  return '';
-};
 
 export const JobListItem: React.FC<IJobListItemProps> = ({
   job,
@@ -92,9 +64,9 @@ export const JobListItem: React.FC<IJobListItemProps> = ({
           }}
         >
           <StatusChip state={job.state} />
-          {job.cluster && (
+          {job.job_input?.cluster && (
             <Chip
-              label={job.cluster}
+              label={job.job_input.cluster}
               size="small"
               variant="outlined"
               sx={{
