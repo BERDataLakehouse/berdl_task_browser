@@ -36,10 +36,30 @@ const browserIcon = new LabIcon({
   svgstr: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${faBarsProgress.icon[0]} ${faBarsProgress.icon[1]}"><path fill="currentColor" d="${faBarsProgress.icon[4]}"/></svg>`
 });
 
+/**
+ * CTS namespace interface for window.kbase.task_browser
+ */
+export interface ICTSNamespace {
+  mockMode: boolean;
+  getToken: () => string;
+  app: JupyterFrontEnd | null;
+  selectJob: ((jobId: string) => void) | null;
+  renderJobWidget: ((element: HTMLElement, jobId: string) => () => void) | null;
+}
+
+/**
+ * Typed window interface for KBase namespace access
+ */
+export interface IKBaseWindow extends Window {
+  kbase?: {
+    task_browser?: ICTSNamespace;
+    [key: string]: unknown;
+  };
+}
+
 function getCTSNamespace(): ICTSNamespace | null {
-  const win = window as unknown as Record<string, unknown>;
-  const kbase = win.kbase as Record<string, unknown> | undefined;
-  return (kbase?.task_browser as ICTSNamespace) || null;
+  const win = window as unknown as IKBaseWindow;
+  return win.kbase?.task_browser || null;
 }
 
 export function registerSelectJobCallback(
@@ -49,14 +69,6 @@ export function registerSelectJobCallback(
   if (cts) {
     cts.selectJob = callback;
   }
-}
-
-interface ICTSNamespace {
-  mockMode: boolean;
-  getToken: () => string;
-  app: JupyterFrontEnd | null;
-  selectJob: ((jobId: string) => void) | null;
-  renderJobWidget: ((element: HTMLElement, jobId: string) => () => void) | null;
 }
 
 /**
@@ -108,9 +120,25 @@ function renderJobWidget(element: HTMLElement, jobId: string): () => void {
  *   window.kbase.task_browser.selectJob(id)           // Select job in sidebar
  *   window.kbase.task_browser.renderJobWidget(el, id) // Render widget into DOM element
  */
+/**
+ * Start MSW worker for mock mode
+ */
+async function startMockServiceWorker(): Promise<void> {
+  try {
+    const { worker } = await import('./mocks/browser');
+    await worker.start({
+      onUnhandledRequest: 'bypass',
+      quiet: true
+    });
+    console.log('[CTS] Mock Service Worker started');
+  } catch (error) {
+    console.error('[CTS] Failed to start Mock Service Worker:', error);
+  }
+}
+
 function registerCTSNamespace(app: JupyterFrontEnd): void {
-  const win = window as unknown as Record<string, unknown>;
-  const existing = (win.kbase as Record<string, unknown>) || {};
+  const win = window as unknown as IKBaseWindow;
+  const existing = win.kbase || {};
 
   const mockModeFromEnv = PageConfig.getOption('ctsMockMode') === 'true';
 
@@ -126,6 +154,11 @@ function registerCTSNamespace(app: JupyterFrontEnd): void {
     ...existing,
     task_browser: ctsNamespace
   };
+
+  // Start MSW if mock mode is enabled
+  if (mockModeFromEnv) {
+    startMockServiceWorker();
+  }
 
   const token = getToken();
   console.log(
