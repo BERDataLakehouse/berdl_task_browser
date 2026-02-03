@@ -1,7 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { JupyterFrontEnd } from '@jupyterlab/application';
-import { ILayoutRestorer } from '@jupyterlab/application';
-import { IStateDB } from '@jupyterlab/statedb';
 import { INotebookTracker } from '@jupyterlab/notebook';
 import { Box, Typography, IconButton, Tooltip } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -17,15 +15,11 @@ import { getToken } from '../auth/token';
 
 export interface ICTSBrowserProps {
   jupyterApp: JupyterFrontEnd;
-  restorer: ILayoutRestorer;
-  stateDB: IStateDB;
   notebookTracker: INotebookTracker | null;
 }
 
 export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
   jupyterApp,
-  restorer,
-  stateDB,
   notebookTracker
 }) => {
   const [filters, setFilters] = useState<IJobFilters>({});

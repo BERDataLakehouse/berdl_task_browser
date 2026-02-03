@@ -14,10 +14,15 @@ import { createRoot, Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CTSBrowser } from './components/CTSBrowser';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { JobEmbedWidget } from './components/JobEmbedWidget';
 import { faBarsProgress } from '@fortawesome/free-solid-svg-icons';
 import { PageConfig } from '@jupyterlab/coreutils';
 import { getToken } from './auth/token';
+import { ICTSNamespace, IKBaseWindow } from './types/window';
+
+// Re-export types for external consumers
+export type { ICTSNamespace, IKBaseWindow };
 
 // Shared MUI theme for sidebar and embedded widgets
 const theme = createTheme();
@@ -35,27 +40,6 @@ const browserIcon = new LabIcon({
   name: ICON_ID,
   svgstr: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${faBarsProgress.icon[0]} ${faBarsProgress.icon[1]}"><path fill="currentColor" d="${faBarsProgress.icon[4]}"/></svg>`
 });
-
-/**
- * CTS namespace interface for window.kbase.task_browser
- */
-export interface ICTSNamespace {
-  mockMode: boolean;
-  getToken: () => string;
-  app: JupyterFrontEnd | null;
-  selectJob: ((jobId: string) => void) | null;
-  renderJobWidget: ((element: HTMLElement, jobId: string) => () => void) | null;
-}
-
-/**
- * Typed window interface for KBase namespace access
- */
-export interface IKBaseWindow extends Window {
-  kbase?: {
-    task_browser?: ICTSNamespace;
-    [key: string]: unknown;
-  };
-}
 
 function getCTSNamespace(): ICTSNamespace | null {
   const win = window as unknown as IKBaseWindow;
@@ -130,7 +114,6 @@ async function startMockServiceWorker(): Promise<void> {
       onUnhandledRequest: 'bypass',
       quiet: true
     });
-    console.log('[CTS] Mock Service Worker started');
   } catch (error) {
     console.error('[CTS] Failed to start Mock Service Worker:', error);
   }
@@ -159,14 +142,6 @@ function registerCTSNamespace(app: JupyterFrontEnd): void {
   if (mockModeFromEnv) {
     startMockServiceWorker();
   }
-
-  const token = getToken();
-  console.log(
-    '[CTS] Namespace registered. Token:',
-    token ? 'found' : 'not found',
-    '| Mock mode:',
-    mockModeFromEnv ? 'enabled' : 'disabled'
-  );
 }
 
 /**
@@ -184,8 +159,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
     stateDB: IStateDB,
     notebookTracker: INotebookTracker | null
   ) => {
-    console.log('JupyterLab extension berdl-task-browser is activated!');
-
     registerCTSNamespace(app);
 
     // Create QueryClient for React Query (shared for embedded widgets)
@@ -203,12 +176,14 @@ const plugin: JupyterFrontEndPlugin<void> = {
       React.createElement(
         QueryClientProvider,
         { client: queryClient },
-        React.createElement(CTSBrowser, {
-          jupyterApp: app,
-          restorer,
-          stateDB,
-          notebookTracker
-        })
+        React.createElement(
+          ErrorBoundary,
+          null,
+          React.createElement(CTSBrowser, {
+            jupyterApp: app,
+            notebookTracker
+          })
+        )
       )
     );
 

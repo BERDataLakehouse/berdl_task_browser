@@ -10,7 +10,7 @@ import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { useJobDetail } from '../api/ctsApi';
 import { StatusChip } from './StatusChip';
 import { getLastUpdateTime } from '../utils/dateUtils';
-import { IKBaseWindow } from '../index';
+import { IKBaseWindow } from '../types/window';
 
 export interface IJobEmbedWidgetProps {
   jobId: string;

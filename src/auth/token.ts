@@ -8,7 +8,7 @@
 
 import { PageConfig } from '@jupyterlab/coreutils';
 import { MOCK_TOKEN } from '../config';
-import { IKBaseWindow } from '../index';
+import { IKBaseWindow } from '../types/window';
 
 /**
  * Check if mock mode is enabled.
