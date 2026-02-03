@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -18,6 +18,7 @@ import {
   faChevronRight
 } from '@fortawesome/free-solid-svg-icons';
 import { useJobLog } from '../api/ctsApi';
+import { LOG_MAX_HEIGHT } from '../config';
 
 interface ILogViewerProps {
   jobId: string;
@@ -46,9 +47,19 @@ export const LogViewer: React.FC<ILogViewerProps> = ({
     expanded && activeTab === 'stderr'
   );
 
-  const handleToggle = () => {
-    setExpanded(!expanded);
-  };
+  const handleToggle = useCallback(() => {
+    setExpanded(prev => !prev);
+  }, []);
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        handleToggle();
+      }
+    },
+    [handleToggle]
+  );
 
   const handleTabChange = (
     _event: React.SyntheticEvent,
@@ -75,6 +86,11 @@ export const LogViewer: React.FC<ILogViewerProps> = ({
       {/* Header */}
       <Box
         onClick={handleToggle}
+        onKeyDown={handleKeyDown}
+        role="button"
+        tabIndex={0}
+        aria-expanded={expanded}
+        aria-label={expanded ? 'Collapse logs' : 'Expand logs'}
         sx={{
           display: 'flex',
           alignItems: 'center',
@@ -87,6 +103,11 @@ export const LogViewer: React.FC<ILogViewerProps> = ({
           borderColor: 'divider',
           '&:hover': {
             bgcolor: 'grey.100'
+          },
+          '&:focus': {
+            outline: '2px solid',
+            outlineColor: 'primary.main',
+            outlineOffset: -2
           }
         }}
       >
@@ -168,7 +189,7 @@ export const LogViewer: React.FC<ILogViewerProps> = ({
               bgcolor: 'grey.900',
               color: 'grey.100',
               p: 0.75,
-              maxHeight: 150,
+              maxHeight: LOG_MAX_HEIGHT,
               overflow: 'auto',
               fontFamily: 'monospace',
               fontSize: '0.6rem',

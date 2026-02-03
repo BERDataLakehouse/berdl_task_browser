@@ -63,7 +63,9 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
   }, [notebookTracker]);
 
   const getStatusSummary = (jobs: IJob[] | undefined): string => {
-    if (!jobs || jobs.length === 0) return 'No jobs';
+    if (!jobs || jobs.length === 0) {
+      return 'No jobs';
+    }
     return `${jobs.length} job${jobs.length === 1 ? '' : 's'}`;
   };
 
@@ -93,7 +95,12 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
           {getStatusSummary(jobsQuery.data)}
         </Typography>
         <Tooltip title="Create Job">
-          <IconButton size="small" onClick={handleOpenWizard} sx={{ p: 0.25 }}>
+          <IconButton
+            size="small"
+            onClick={handleOpenWizard}
+            aria-label="Create job"
+            sx={{ p: 0.25 }}
+          >
             <FontAwesomeIcon
               icon={faWandMagicSparkles}
               style={{ fontSize: '0.7rem' }}

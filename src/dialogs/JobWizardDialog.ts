@@ -181,7 +181,7 @@ export class JobWizardBody
     const input = document.createElement('input');
     input.type = 'text';
     input.name = name;
-    input.className = '';
+    input.className = 'jp-mod-styled';
     input.placeholder = placeholder;
     input.required = required;
     field.appendChild(input);
@@ -201,7 +201,7 @@ export class JobWizardBody
 
     const input = document.createElement('input');
     input.type = 'text';
-    input.className = '';
+    input.className = 'jp-mod-styled';
     input.placeholder = 's3://bucket/file.txt';
     input.value = value;
     input.addEventListener('input', e => {
@@ -263,7 +263,7 @@ export class JobWizardBody
 
     const input = document.createElement('input');
     input.type = 'text';
-    input.className = '';
+    input.className = 'jp-mod-styled';
     input.placeholder = '--flag or value';
     input.value = value;
     input.addEventListener('input', e => {
@@ -318,6 +318,16 @@ export class JobWizardBody
       return false;
     }
 
+    const cpusValue = this._cpusInput.value.trim();
+    if (cpusValue) {
+      const cpus = parseFloat(cpusValue);
+      if (isNaN(cpus) || cpus <= 0) {
+        this._showError('CPUs must be a positive number');
+        this._cpusInput.focus();
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -359,31 +369,43 @@ export async function showJobWizardDialog(
   });
 
   if (result.button.label === 'Source') {
-    if (body.validate()) {
-      const formData = body.getValue();
-      const code = generateJobCreationCode({
-        image: formData.image,
-        inputFiles: formData.inputFiles,
-        outputDir: formData.outputDir,
-        cluster: formData.cluster || undefined,
-        cpus: formData.cpus,
-        memory: formData.memory || undefined,
-        args: formData.args
-      });
-
-      const codeWidget = new Widget();
-      codeWidget.node.innerHTML = `<pre style="background: var(--jp-layout-color2); padding: 12px; border-radius: 4px; overflow: auto; max-height: 400px; font-family: var(--jp-code-font-family); font-size: var(--jp-code-font-size); margin: 0; white-space: pre-wrap;"></pre>`;
-      codeWidget.node.querySelector('pre')!.textContent = code;
-
-      await showDialog({
-        title: 'Generated Code',
-        body: codeWidget,
-        buttons: [Dialog.okButton({ label: 'Close' })]
-      });
-
-      return showJobWizardDialog(notebookTracker, formData);
+    if (!body.validate()) {
+      return showJobWizardDialog(notebookTracker, body.getValue());
     }
-    return false;
+
+    const formData = body.getValue();
+    const code = generateJobCreationCode({
+      image: formData.image,
+      inputFiles: formData.inputFiles,
+      outputDir: formData.outputDir,
+      cluster: formData.cluster || undefined,
+      cpus: formData.cpus,
+      memory: formData.memory || undefined,
+      args: formData.args
+    });
+
+    const codeWidget = new Widget();
+    const preStyle = [
+      'background: var(--jp-layout-color2)',
+      'padding: 12px',
+      'border-radius: 4px',
+      'overflow: auto',
+      'max-height: 400px',
+      'font-family: var(--jp-code-font-family)',
+      'font-size: var(--jp-code-font-size)',
+      'margin: 0',
+      'white-space: pre-wrap'
+    ].join('; ');
+    codeWidget.node.innerHTML = `<pre style="${preStyle}"></pre>`;
+    codeWidget.node.querySelector('pre')!.textContent = code;
+
+    await showDialog({
+      title: 'Generated Code',
+      body: codeWidget,
+      buttons: [Dialog.okButton({ label: 'Close' })]
+    });
+
+    return showJobWizardDialog(notebookTracker, formData);
   }
 
   if (result.button.accept) {
