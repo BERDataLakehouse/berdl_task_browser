@@ -41,6 +41,9 @@ def _load_jupyter_server_extension(server_app):
     if token := os.environ.get("KBASE_AUTH_TOKEN"):
         page_config["kbaseAuthToken"] = token
 
+    if cts_url := os.environ.get("CDM_TASK_SERVICE_URL"):
+        page_config["ctsApiBase"] = cts_url.rstrip('/')
+
     if os.environ.get("CTS_MOCK_MODE", "").lower() in ("true", "1", "yes"):
         page_config["ctsMockMode"] = "true"
 
