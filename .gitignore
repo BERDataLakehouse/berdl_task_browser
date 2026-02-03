@@ -7,9 +7,9 @@ node_modules/
 *.egg-info/
 .ipynb_checkpoints
 *.tsbuildinfo
-berdl_cts_browser/labextension
+berdl_task_browser/labextension
 # Version file is handled by hatchling
-berdl_cts_browser/_version.py
+berdl_task_browser/_version.py
 
 # Integration tests
 ui-tests/test-results/

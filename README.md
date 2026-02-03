@@ -1,6 +1,6 @@
-# berdl_cts_browser
+# berdl_task_browser
 
-[![Github Actions Status](https://github.com/kbaseincubator/berdl-cts-browser/workflows/Build/badge.svg)](https://github.com/kbaseincubator/berdl-cts-browser/actions/workflows/build.yml)
+[![Github Actions Status](https://github.com/kbaseincubator/berdl-task-browser/workflows/Build/badge.svg)](https://github.com/kbaseincubator/berdl-task-browser/actions/workflows/build.yml)
 
 A JupyterLab extension for browsing CTS data
 
@@ -13,7 +13,7 @@ A JupyterLab extension for browsing CTS data
 To install the extension, execute:
 
 ```bash
-pip install berdl_cts_browser
+pip install berdl_task_browser
 ```
 
 ## Uninstall
@@ -21,7 +21,7 @@ pip install berdl_cts_browser
 To remove the extension, execute:
 
 ```bash
-pip uninstall berdl_cts_browser
+pip uninstall berdl_task_browser
 ```
 
 ## Contributing
@@ -35,7 +35,7 @@ The `jlpm` command is JupyterLab's pinned version of
 
 ```bash
 # Clone the repo to your local environment
-# Change directory to the berdl_cts_browser directory
+# Change directory to the berdl_task_browser directory
 
 # Install dependencies with uv
 uv sync
@@ -69,12 +69,12 @@ jupyter lab build --minimize=False
 ### Development uninstall
 
 ```bash
-uv pip uninstall berdl_cts_browser
+uv pip uninstall berdl_task_browser
 ```
 
 In development mode, you will also need to remove the symlink created by `jupyter labextension develop`
 command. To find its location, you can run `jupyter labextension list` to figure out where the `labextensions`
-folder is located. Then you can remove the symlink named `berdl-cts-browser` within that folder.
+folder is located. Then you can remove the symlink named `berdl-task-browser` within that folder.
 
 ### Testing the extension
 

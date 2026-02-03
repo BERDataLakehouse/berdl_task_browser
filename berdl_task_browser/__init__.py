@@ -7,7 +7,7 @@ except ImportError:
     # in editable mode with pip. It is highly recommended to install
     # the package from a stable release or in editable mode: https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs
     import warnings
-    warnings.warn("Importing 'berdl_cts_browser' outside a proper installation.")
+    warnings.warn("Importing 'berdl_task_browser' outside a proper installation.")
     __version__ = "dev"
 
 # Export viewer functions for notebook use
@@ -23,12 +23,12 @@ __all__ = [
 def _jupyter_labextension_paths():
     return [{
         "src": "labextension",
-        "dest": "berdl-cts-browser"
+        "dest": "berdl-task-browser"
     }]
 
 
 def _jupyter_server_extension_points():
-    return [{"module": "berdl_cts_browser"}]
+    return [{"module": "berdl_task_browser"}]
 
 
 def _load_jupyter_server_extension(server_app):
@@ -41,4 +41,4 @@ def _load_jupyter_server_extension(server_app):
     if token := os.environ.get("KBASE_AUTH_TOKEN"):
         page_config["kbaseAuthToken"] = token
 
-    server_app.log.info("Registered berdl_cts_browser server extension")
+    server_app.log.info("Registered berdl_task_browser server extension")
