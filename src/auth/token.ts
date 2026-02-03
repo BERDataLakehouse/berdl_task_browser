@@ -7,6 +7,8 @@
  */
 
 import { PageConfig } from '@jupyterlab/coreutils';
+import { MOCK_TOKEN } from '../config';
+import { IKBaseWindow } from '../index';
 
 /**
  * Check if mock mode is enabled.
@@ -17,10 +19,8 @@ import { PageConfig } from '@jupyterlab/coreutils';
  */
 export function isMockMode(): boolean {
   // Check window namespace first (can be toggled at runtime)
-  const win = window as unknown as Record<string, unknown>;
-  const kbase = win.kbase as Record<string, unknown> | undefined;
-  const tb = kbase?.task_browser as { mockMode?: boolean } | undefined;
-  if (tb?.mockMode === true) {
+  const win = window as unknown as IKBaseWindow;
+  if (win.kbase?.task_browser?.mockMode === true) {
     return true;
   }
 
@@ -36,13 +36,14 @@ export function isMockMode(): boolean {
 export function getToken(): string {
   // Mock mode: return a placeholder token
   if (isMockMode()) {
-    return 'mock-token';
+    return MOCK_TOKEN;
   }
 
   // Production: JupyterHub sets kbase_session cookie on login
   const cookies = document.cookie.split(';');
   for (const cookie of cookies) {
-    const [name, value] = cookie.trim().split('=');
+    const [name, ...valueParts] = cookie.trim().split('=');
+    const value = valueParts.join('=');
     if (name === 'kbase_session') {
       return value;
     }
@@ -51,4 +52,17 @@ export function getToken(): string {
   // Development: KBASE_AUTH_TOKEN env var exposed via server extension
   // (see berdl_task_browser/__init__.py)
   return PageConfig.getOption('kbaseAuthToken') || '';
+}
+
+/**
+ * Get authorization header for CTS API requests.
+ * Returns empty object if no token is available.
+ */
+export function getAuthHeader(): Record<string, string> {
+  const token = getToken();
+  if (!token) {
+    return {};
+  }
+  const bearer = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+  return { Authorization: bearer };
 }
