@@ -6,6 +6,10 @@ node_modules/
 .stylelintcache
 *.egg-info/
 .ipynb_checkpoints
+# JupyterLab notebooks (development/testing)
+*.ipynb
+# Test output
+junit.xml
 *.tsbuildinfo
 berdl_task_browser/labextension
 # Version file is handled by hatchling
