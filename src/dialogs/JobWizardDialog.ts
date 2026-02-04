@@ -396,8 +396,10 @@ export async function showJobWizardDialog(
       'margin: 0',
       'white-space: pre-wrap'
     ].join('; ');
-    codeWidget.node.innerHTML = `<pre style="${preStyle}"></pre>`;
-    codeWidget.node.querySelector('pre')!.textContent = code;
+    const pre = document.createElement('pre');
+    pre.style.cssText = preStyle;
+    pre.textContent = code;
+    codeWidget.node.appendChild(pre);
 
     await showDialog({
       title: 'Generated Code',

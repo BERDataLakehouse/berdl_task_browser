@@ -177,7 +177,7 @@ export function useJobDetail(jobId: string | null) {
   const token = getToken();
   return useQuery({
     queryKey: ['job', jobId, token],
-    queryFn: () => fetchJobDetail(jobId!),
+    queryFn: () => fetchJobDetail(jobId as string),
     enabled: Boolean(jobId) && (Boolean(token) || isMockMode()),
     staleTime: 5000
   });
@@ -189,7 +189,7 @@ export function useJobStatus(jobId: string | null, currentState?: JobState) {
 
   return useQuery({
     queryKey: ['job-status', jobId, token],
-    queryFn: () => fetchJobStatus(jobId!),
+    queryFn: () => fetchJobStatus(jobId as string),
     enabled: Boolean(jobId) && (Boolean(token) || isMockMode()),
     refetchInterval: shouldPoll ? POLLING_INTERVAL_ACTIVE : false,
     staleTime: 2000
@@ -214,7 +214,7 @@ export function useJobExitCodes(jobId: string | null, enabled = true) {
   const token = getToken();
   return useQuery({
     queryKey: ['job-exit-codes', jobId, token],
-    queryFn: () => fetchJobExitCodes(jobId!),
+    queryFn: () => fetchJobExitCodes(jobId as string),
     enabled: Boolean(jobId) && (Boolean(token) || isMockMode()) && enabled,
     staleTime: Infinity // Exit codes don't change
   });
@@ -229,7 +229,7 @@ export function useJobLog(
   const token = getToken();
   return useQuery({
     queryKey: ['job-log', jobId, containerNum, stream, token],
-    queryFn: () => fetchJobLog(jobId!, containerNum, stream),
+    queryFn: () => fetchJobLog(jobId as string, containerNum, stream),
     enabled: Boolean(jobId) && (Boolean(token) || isMockMode()) && enabled,
     staleTime: 30000 // Cache logs for 30 seconds
   });
