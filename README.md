@@ -44,31 +44,34 @@ uv sync
 uv run jupyter labextension develop . --overwrite
 
 # Rebuild extension Typescript source after making changes
-# IMPORTANT: Unlike the steps above which are performed only once, do this step
-# every time you make a change.
 uv run jlpm build
 ```
+
+### Running for development
 
 You can watch the source directory and run JupyterLab at the same time in different terminals to watch for changes in the extension's source and automatically rebuild the extension.
 
 ```bash
 # Watch the source directory in one terminal, automatically rebuilding when needed
 uv run jlpm watch
+
 # Run JupyterLab in another terminal
 KBASE_AUTH_TOKEN=your-token \
 CDM_TASK_SERVICE_URL=https://ci.kbase.us/services/cts \
 uv run jupyter lab
 ```
 
-#### Environment Variables
+With the watch command running, every saved change will immediately be built locally and available in your running JupyterLab. Refresh JupyterLab to load the change in your browser (you may need to wait several seconds for the extension to be rebuilt).
 
-| Variable | Description |
-|----------|-------------|
-| `KBASE_AUTH_TOKEN` | Auth token for CTS API (required) |
-| `CDM_TASK_SERVICE_URL` | CTS API endpoint (defaults to CI) |
-| `CTS_MOCK_MODE` | Set to `true` to enable mock mode |
+#### Environment variables
 
-#### Mock Mode
+| Variable               | Description                                    |
+| ---------------------- | ---------------------------------------------- |
+| `KBASE_AUTH_TOKEN`     | Auth token for CTS API (required for real API) |
+| `CDM_TASK_SERVICE_URL` | CTS API endpoint (defaults to CI)              |
+| `CTS_MOCK_MODE`        | Set to `true` to enable mock mode              |
+
+#### Mock mode
 
 For development without a real CTS API, enable mock mode:
 
@@ -78,7 +81,7 @@ CTS_MOCK_MODE=true uv run jupyter lab
 
 Mock mode uses [MSW (Mock Service Worker)](https://mswjs.io/) to intercept API requests and return test data.
 
-#### CORS Proxy (Alternative)
+#### CORS proxy (alternative)
 
 If you need to test against the real CTS API from localhost:
 
@@ -88,9 +91,9 @@ uv run python scripts/cts_proxy.py
 
 This starts a CORS-enabled proxy on `localhost:8080`.
 
-With the watch command running, every saved change will immediately be built locally and available in your running JupyterLab. Refresh JupyterLab to load the change in your browser (you may need to wait several seconds for the extension to be rebuilt).
+#### Source maps
 
-By default, the `jlpm build` command generates the source maps for this extension to make it easier to debug using the browser dev tools. To also generate source maps for the JupyterLab core extensions, you can run the following command:
+By default, `jlpm build` generates source maps for this extension to make it easier to debug using the browser dev tools. To also generate source maps for the JupyterLab core extensions:
 
 ```bash
 jupyter lab build --minimize=False
