@@ -1,11 +1,10 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { JupyterFrontEnd } from '@jupyterlab/application';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { INotebookTracker } from '@jupyterlab/notebook';
 import { Box, Typography, IconButton, Tooltip } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { useJobs, useJobDetail } from '../api/ctsApi';
-import { IJob, IJobFilters } from '../types/jobs';
+import { IJobFilters } from '../types/jobs';
 import { JobFilters } from './JobFilters';
 import { JobList } from './JobList';
 import { JobDetail } from './JobDetail';
@@ -14,14 +13,10 @@ import { registerSelectJobCallback } from '../index';
 import { getToken } from '../auth/token';
 
 export interface ICTSBrowserProps {
-  jupyterApp: JupyterFrontEnd;
   notebookTracker: INotebookTracker | null;
 }
 
-export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
-  jupyterApp,
-  notebookTracker
-}) => {
+export const CTSBrowser: React.FC<ICTSBrowserProps> = ({ notebookTracker }) => {
   const [filters, setFilters] = useState<IJobFilters>({});
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
@@ -56,12 +51,13 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
     showJobWizardDialog(notebookTracker);
   }, [notebookTracker]);
 
-  const getStatusSummary = (jobs: IJob[] | undefined): string => {
+  const statusSummary = useMemo(() => {
+    const jobs = jobsQuery.data;
     if (!jobs || jobs.length === 0) {
       return 'No jobs';
     }
     return `${jobs.length} job${jobs.length === 1 ? '' : 's'}`;
-  };
+  }, [jobsQuery.data]);
 
   return (
     <Box
@@ -86,7 +82,7 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
         }}
       >
         <Typography variant="caption" color="text.secondary">
-          {getStatusSummary(jobsQuery.data)}
+          {statusSummary}
         </Typography>
         <Tooltip title="Create Job">
           <IconButton
@@ -116,7 +112,7 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
         {!getToken() ? (
           <Box sx={{ p: 1, textAlign: 'center' }}>
             <Typography sx={{ fontSize: '0.7rem' }} color="text.secondary">
-              No auth token found. Set KBASE_AUTH_TOKEN environment variable.
+              Auth token missing.
             </Typography>
           </Box>
         ) : (

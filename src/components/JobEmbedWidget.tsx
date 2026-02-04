@@ -7,7 +7,7 @@ import React from 'react';
 import { Box, Typography, IconButton, Tooltip, Chip } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
-import { useJobDetail } from '../api/ctsApi';
+import { useJobDetail, useJobStatus } from '../api/ctsApi';
 import { StatusChip } from './StatusChip';
 import { getLastUpdateTime } from '../utils/dateUtils';
 import { IKBaseWindow } from '../types/window';
@@ -18,6 +18,12 @@ export interface IJobEmbedWidgetProps {
 
 export const JobEmbedWidget: React.FC<IJobEmbedWidgetProps> = ({ jobId }) => {
   const { data: job, isLoading, error } = useJobDetail(jobId);
+
+  // Poll for status updates on active jobs
+  const { data: statusData } = useJobStatus(jobId, job?.state);
+
+  // Use polled state if available, otherwise fall back to job detail state
+  const currentState = statusData?.state ?? job?.state;
 
   const handleViewInfo = () => {
     const win = window as unknown as IKBaseWindow;
@@ -52,7 +58,7 @@ export const JobEmbedWidget: React.FC<IJobEmbedWidgetProps> = ({ jobId }) => {
       ) : (
         <>
           {/* Status chip */}
-          <StatusChip state={job.state} />
+          <StatusChip state={currentState ?? job.state} />
 
           {/* Job ID */}
           <Typography

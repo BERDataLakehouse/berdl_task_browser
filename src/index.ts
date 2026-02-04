@@ -174,7 +174,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
           ErrorBoundary,
           null,
           React.createElement(CTSBrowser, {
-            jupyterApp: app,
             notebookTracker
           })
         )

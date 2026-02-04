@@ -33,7 +33,7 @@ function getErrorMessage(status: number, statusText: string): string {
 }
 
 // API fetch helpers
-async function fetchApi<T>(endpoint: string): Promise<T> {
+async function getApi<T>(endpoint: string): Promise<T> {
   const url = `${CTS_API_BASE}${endpoint}`;
   let response: Response;
   try {
@@ -95,16 +95,16 @@ interface IJobsApiResponse {
 
 export async function fetchJobs(filters: IJobFilters = {}): Promise<IJob[]> {
   const queryString = buildJobsQueryString(filters);
-  const response = await fetchApi<IJobsApiResponse>(`/jobs/${queryString}`);
+  const response = await getApi<IJobsApiResponse>(`/jobs/${queryString}`);
   return response.jobs;
 }
 
 export async function fetchJobDetail(jobId: string): Promise<IJob> {
-  return fetchApi<IJob>(`/jobs/${jobId}`);
+  return getApi<IJob>(`/jobs/${jobId}`);
 }
 
 export async function fetchJobStatus(jobId: string): Promise<IJobStatus> {
-  return fetchApi<IJobStatus>(`/jobs/${jobId}/status`);
+  return getApi<IJobStatus>(`/jobs/${jobId}/status`);
 }
 
 export async function cancelJob(jobId: string): Promise<IJob> {
@@ -116,7 +116,7 @@ interface IExitCodesResponse {
 }
 
 export async function fetchJobExitCodes(jobId: string): Promise<IExitCode[]> {
-  const response = await fetchApi<IExitCodesResponse>(
+  const response = await getApi<IExitCodesResponse>(
     `/jobs/${jobId}/exit_codes`
   );
   return response.exit_codes
@@ -129,7 +129,7 @@ interface ISitesResponse {
 }
 
 export async function fetchSites(): Promise<ISite[]> {
-  const response = await fetchApi<ISitesResponse>('/sites/');
+  const response = await getApi<ISitesResponse>('/sites/');
   return response.sites;
 }
 
