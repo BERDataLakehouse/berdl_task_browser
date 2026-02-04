@@ -8,7 +8,6 @@ import { JupyterFrontEnd } from '@jupyterlab/application';
  * CTS namespace interface for window.kbase.task_browser
  */
 export interface ICTSNamespace {
-  mockMode: boolean;
   getToken: () => string;
   app: JupyterFrontEnd | null;
   selectJob: ((jobId: string) => void) | null;

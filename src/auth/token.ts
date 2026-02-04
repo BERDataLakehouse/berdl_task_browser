@@ -8,23 +8,11 @@
 
 import { PageConfig } from '@jupyterlab/coreutils';
 import { MOCK_TOKEN } from '../config';
-import { IKBaseWindow } from '../types/window';
 
 /**
- * Check if mock mode is enabled.
- *
- * Sources (checked in order):
- * 1. window.kbase.task_browser.mockMode - set at runtime or via console
- * 2. PageConfig ctsMockMode - set from CTS_MOCK_MODE env var
+ * Check if mock mode is enabled via CTS_MOCK_MODE env var.
  */
 export function isMockMode(): boolean {
-  // Check window namespace first (can be toggled at runtime)
-  const win = window as unknown as IKBaseWindow;
-  if (win.kbase?.task_browser?.mockMode === true) {
-    return true;
-  }
-
-  // Check PageConfig (set from CTS_MOCK_MODE env var)
   return PageConfig.getOption('ctsMockMode') === 'true';
 }
 

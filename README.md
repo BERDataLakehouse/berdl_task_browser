@@ -76,11 +76,6 @@ For development without a real CTS API, enable mock mode:
 CTS_MOCK_MODE=true uv run jupyter lab
 ```
 
-Or toggle at runtime in browser console:
-```javascript
-window.kbase.task_browser.mockMode = true
-```
-
 Mock mode uses [MSW (Mock Service Worker)](https://mswjs.io/) to intercept API requests and return test data.
 
 #### CORS Proxy (Alternative)

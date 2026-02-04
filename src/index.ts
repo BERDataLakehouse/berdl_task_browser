@@ -93,12 +93,9 @@ function renderJobWidget(element: HTMLElement, jobId: string): () => void {
  * 1. Bridge for Python widget (show_job) to render React components
  * 2. Console debugging interface
  *
- * Mock mode can be enabled via:
- *   - Environment variable: CTS_MOCK_MODE=true (set when starting JupyterLab)
- *   - Console: window.kbase.task_browser.mockMode = true
+ * Mock mode: Set CTS_MOCK_MODE=true env var when starting JupyterLab.
  *
  * Console usage:
- *   window.kbase.task_browser.mockMode = true         // Enable mock mode
  *   window.kbase.task_browser.getToken()              // Get current auth token
  *   window.kbase.task_browser.app                     // JupyterLab app instance
  *   window.kbase.task_browser.selectJob(id)           // Select job in sidebar
@@ -123,10 +120,7 @@ function registerCTSNamespace(app: JupyterFrontEnd): void {
   const win = window as unknown as IKBaseWindow;
   const existing = win.kbase || {};
 
-  const mockModeFromEnv = PageConfig.getOption('ctsMockMode') === 'true';
-
   const ctsNamespace: ICTSNamespace = {
-    mockMode: mockModeFromEnv,
     getToken: getToken,
     app: app,
     selectJob: null,
@@ -138,8 +132,8 @@ function registerCTSNamespace(app: JupyterFrontEnd): void {
     task_browser: ctsNamespace
   };
 
-  // Start MSW if mock mode is enabled
-  if (mockModeFromEnv) {
+  // Start MSW if mock mode is enabled via env var
+  if (PageConfig.getOption('ctsMockMode') === 'true') {
     startMockServiceWorker();
   }
 }
