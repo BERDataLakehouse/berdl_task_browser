@@ -1,5 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { JupyterFrontEnd } from '@jupyterlab/application';
 import { INotebookTracker } from '@jupyterlab/notebook';
+import { IDocumentManager } from '@jupyterlab/docmanager';
 import { Box, Typography, IconButton, Tooltip } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
@@ -13,10 +15,16 @@ import { registerSelectJobCallback } from '../index';
 import { getToken } from '../auth/token';
 
 export interface ICTSBrowserProps {
+  app: JupyterFrontEnd;
   notebookTracker: INotebookTracker | null;
+  documentManager: IDocumentManager | null;
 }
 
-export const CTSBrowser: React.FC<ICTSBrowserProps> = ({ notebookTracker }) => {
+export const CTSBrowser: React.FC<ICTSBrowserProps> = ({
+  app,
+  notebookTracker,
+  documentManager
+}) => {
   const [filters, setFilters] = useState<IJobFilters>({});
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
@@ -48,8 +56,8 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({ notebookTracker }) => {
   }, []);
 
   const handleOpenWizard = useCallback(() => {
-    showJobWizardDialog(notebookTracker);
-  }, [notebookTracker]);
+    showJobWizardDialog(notebookTracker, undefined, documentManager);
+  }, [notebookTracker, documentManager]);
 
   const statusSummary = useMemo(() => {
     const jobs = jobsQuery.data;
@@ -145,6 +153,7 @@ export const CTSBrowser: React.FC<ICTSBrowserProps> = ({ notebookTracker }) => {
             isLoading={jobDetailQuery.isLoading}
             error={jobDetailQuery.error}
             onClose={handleCloseDetail}
+            app={app}
           />
         </Box>
       )}

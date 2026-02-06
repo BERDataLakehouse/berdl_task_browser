@@ -47,4 +47,10 @@ def _load_jupyter_server_extension(server_app):
     if os.environ.get("CTS_MOCK_MODE", "").lower() in ("true", "1", "yes"):
         page_config["ctsMockMode"] = "true"
 
+    if hub_user := os.environ.get("NB_USER"):
+        page_config["hubUser"] = hub_user
+
+    if bucket := os.environ.get("CDM_DEFAULT_BUCKET"):
+        page_config["cdmDefaultBucket"] = bucket
+
     server_app.log.info("Registered berdl_task_browser server extension")

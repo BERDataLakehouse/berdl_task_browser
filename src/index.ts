@@ -5,6 +5,7 @@ import {
 } from '@jupyterlab/application';
 import { IStateDB } from '@jupyterlab/statedb';
 import { INotebookTracker } from '@jupyterlab/notebook';
+import { IDocumentManager } from '@jupyterlab/docmanager';
 
 import { Panel } from '@lumino/widgets';
 import { LabIcon } from '@jupyterlab/ui-components';
@@ -146,12 +147,13 @@ const plugin: JupyterFrontEndPlugin<void> = {
   description: 'A JupyterLab extension for browsing CTS data',
   autoStart: true,
   requires: [ILayoutRestorer, IStateDB],
-  optional: [INotebookTracker],
+  optional: [INotebookTracker, IDocumentManager],
   activate: (
     app: JupyterFrontEnd,
     restorer: ILayoutRestorer,
     stateDB: IStateDB,
-    notebookTracker: INotebookTracker | null
+    notebookTracker: INotebookTracker | null,
+    documentManager: IDocumentManager | null
   ) => {
     registerCTSNamespace(app);
 
@@ -174,7 +176,9 @@ const plugin: JupyterFrontEndPlugin<void> = {
           ErrorBoundary,
           null,
           React.createElement(CTSBrowser, {
-            notebookTracker
+            app,
+            notebookTracker,
+            documentManager
           })
         )
       )

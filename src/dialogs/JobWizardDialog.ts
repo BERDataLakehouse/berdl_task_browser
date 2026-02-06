@@ -1,10 +1,13 @@
 import { Dialog, showDialog } from '@jupyterlab/apputils';
+import { FileDialog } from '@jupyterlab/filebrowser';
+import { IDocumentManager } from '@jupyterlab/docmanager';
 import { Widget } from '@lumino/widgets';
 import { INotebookTracker } from '@jupyterlab/notebook';
 import {
   insertCodeCell,
   generateJobCreationCode
 } from '../utils/notebookUtils';
+import { jlabToS3 } from '../utils/s3PathMapping';
 
 export type MemoryUnit = 'GB' | 'MB' | 'Gi' | 'Mi';
 
@@ -69,9 +72,14 @@ export class JobWizardBody
   private _argsContainer!: HTMLDivElement;
   private _errorDisplay!: HTMLDivElement;
   private _args: string[] = [];
+  private _documentManager: IDocumentManager | null;
 
-  constructor(initialData?: IWizardFormData) {
+  constructor(
+    initialData?: IWizardFormData,
+    documentManager?: IDocumentManager | null
+  ) {
     super();
+    this._documentManager = documentManager ?? null;
     this.addClass('jp-JobWizard');
     this._buildForm();
     if (initialData) {
@@ -122,13 +130,28 @@ export class JobWizardBody
     this._inputFilesContainer.className = 'jp-JobWizard-args';
     inputFilesSection.appendChild(this._inputFilesContainer);
 
+    const buttonRow = document.createElement('div');
+    buttonRow.className = 'jp-JobWizard-browseRow';
+
     const addInputFileButton = document.createElement('button');
     addInputFileButton.type = 'button';
     addInputFileButton.className =
       'jp-mod-styled jp-mod-accept jp-JobWizard-addArg';
     addInputFileButton.textContent = '+ Add input file';
     addInputFileButton.addEventListener('click', () => this._addInputFile());
-    inputFilesSection.appendChild(addInputFileButton);
+    buttonRow.appendChild(addInputFileButton);
+
+    if (this._documentManager) {
+      const browseButton = document.createElement('button');
+      browseButton.type = 'button';
+      browseButton.className =
+        'jp-mod-styled jp-mod-accept jp-JobWizard-addArg';
+      browseButton.textContent = 'Browse S3';
+      browseButton.addEventListener('click', () => this._browseS3());
+      buttonRow.appendChild(browseButton);
+    }
+
+    inputFilesSection.appendChild(buttonRow);
 
     this.node.appendChild(inputFilesSection);
 
@@ -321,6 +344,25 @@ export class JobWizardBody
     });
   }
 
+  private async _browseS3(): Promise<void> {
+    if (!this._documentManager) {
+      return;
+    }
+    const result = await FileDialog.getOpenFiles({
+      manager: this._documentManager,
+      defaultPath: 'lakehouse_minio/',
+      title: 'Select Input Files'
+    });
+    if (result.button.accept && result.value) {
+      for (const model of result.value) {
+        const s3Url = jlabToS3(model.path);
+        if (s3Url) {
+          this._addInputFile(s3Url);
+        }
+      }
+    }
+  }
+
   private _addArg(value = ''): void {
     const index = this._args.length;
     this._args.push(value);
@@ -448,9 +490,13 @@ export class JobWizardBody
 
 export async function showJobWizardDialog(
   notebookTracker: INotebookTracker | null,
-  initialData?: IWizardFormData
+  initialData?: IWizardFormData,
+  documentManager?: IDocumentManager | null
 ): Promise<boolean> {
-  const body = new JobWizardBody(initialData);
+  const reopen = (data: IWizardFormData) =>
+    showJobWizardDialog(notebookTracker, data, documentManager);
+
+  const body = new JobWizardBody(initialData, documentManager);
 
   const result = await showDialog({
     title: 'Create CTS Job',
@@ -465,7 +511,7 @@ export async function showJobWizardDialog(
 
   if (result.button.label === 'Source') {
     if (!body.validate()) {
-      return showJobWizardDialog(notebookTracker, body.getValue());
+      return reopen(body.getValue());
     }
 
     const formData = body.getValue();
@@ -502,12 +548,12 @@ export async function showJobWizardDialog(
       buttons: [Dialog.okButton({ label: 'Close' })]
     });
 
-    return showJobWizardDialog(notebookTracker, formData);
+    return reopen(formData);
   }
 
   if (result.button.accept) {
     if (!body.validate()) {
-      return showJobWizardDialog(notebookTracker, body.getValue());
+      return reopen(body.getValue());
     }
 
     const formData = result.value;
@@ -521,7 +567,7 @@ export async function showJobWizardDialog(
         body: 'No active notebook found. Please open a notebook first.',
         buttons: [Dialog.okButton()]
       });
-      return showJobWizardDialog(notebookTracker, formData);
+      return reopen(formData);
     }
 
     const code = generateJobCreationCode({
@@ -541,7 +587,7 @@ export async function showJobWizardDialog(
         body: 'Failed to insert code into notebook',
         buttons: [Dialog.okButton()]
       });
-      return showJobWizardDialog(notebookTracker, formData);
+      return reopen(formData);
     }
 
     return true;

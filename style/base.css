@@ -204,3 +204,10 @@
   border-color: var(--jp-success-color1);
   color: var(--jp-success-color1);
 }
+
+/* Button row for input file actions */
+.jp-JobWizard-browseRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
