@@ -6,6 +6,44 @@ import {
   generateJobCreationCode
 } from '../utils/notebookUtils';
 
+export type MemoryUnit = 'GB' | 'MB' | 'Gi' | 'Mi';
+
+export interface IParsedMemory {
+  value: number;
+  unit: MemoryUnit;
+}
+
+const MEMORY_UNITS: MemoryUnit[] = ['GB', 'MB', 'Gi', 'Mi'];
+
+const BYTES_PER_UNIT: Record<MemoryUnit, number> = {
+  GB: 1e9,
+  MB: 1e6,
+  Gi: 2 ** 30,
+  Mi: 2 ** 20
+};
+
+const MIN_BYTES = 1e6; // 1 MB
+const MAX_BYTES = 990e9; // 990 GB
+
+export function parseMemoryString(str: string): IParsedMemory | null {
+  if (!str || !str.trim()) {
+    return null;
+  }
+  const match = str.trim().match(/^([0-9]*\.?[0-9]+)\s*(GB|MB|Gi|Mi)$/);
+  if (!match) {
+    return null;
+  }
+  return { value: parseFloat(match[1]), unit: match[2] as MemoryUnit };
+}
+
+export function composeMemoryString(value: string, unit: MemoryUnit): string {
+  return `${value}${unit}`;
+}
+
+export function memoryToBytes(value: number, unit: MemoryUnit): number {
+  return value * BYTES_PER_UNIT[unit];
+}
+
 export interface IWizardFormData {
   image: string;
   inputFiles: string[];
@@ -26,7 +64,8 @@ export class JobWizardBody
   private _outputDirInput!: HTMLInputElement;
   private _clusterInput!: HTMLInputElement;
   private _cpusInput!: HTMLInputElement;
-  private _memoryInput!: HTMLInputElement;
+  private _memoryValueInput!: HTMLInputElement;
+  private _memoryUnitSelect!: HTMLSelectElement;
   private _argsContainer!: HTMLDivElement;
   private _errorDisplay!: HTMLDivElement;
   private _args: string[] = [];
@@ -47,7 +86,11 @@ export class JobWizardBody
     if (data.cpus !== undefined) {
       this._cpusInput.value = String(data.cpus);
     }
-    this._memoryInput.value = data.memory;
+    const parsed = parseMemoryString(data.memory);
+    if (parsed) {
+      this._memoryValueInput.value = String(parsed.value);
+      this._memoryUnitSelect.value = parsed.unit;
+    }
     for (const file of data.inputFiles) {
       this._addInputFile(file);
     }
@@ -129,17 +172,42 @@ export class JobWizardBody
     rowContainer.appendChild(cpusField);
 
     const memoryField = document.createElement('div');
-    memoryField.className = 'jp-JobWizard-field jp-JobWizard-fieldSmall';
+    memoryField.className = 'jp-JobWizard-field jp-JobWizard-fieldMedium';
     const memoryLabel = document.createElement('label');
     memoryLabel.textContent = 'Memory';
-    memoryLabel.htmlFor = 'memory';
-    this._memoryInput = document.createElement('input');
-    this._memoryInput.type = 'text';
-    this._memoryInput.name = 'memory';
-    this._memoryInput.className = 'jp-mod-styled';
-    this._memoryInput.placeholder = '4Gi';
+    memoryLabel.htmlFor = 'memoryValue';
     memoryField.appendChild(memoryLabel);
-    memoryField.appendChild(this._memoryInput);
+
+    const memoryRow = document.createElement('div');
+    memoryRow.className = 'jp-JobWizard-memoryRow';
+
+    this._memoryValueInput = document.createElement('input');
+    this._memoryValueInput.type = 'number';
+    this._memoryValueInput.name = 'memoryValue';
+    this._memoryValueInput.className = 'jp-mod-styled';
+    this._memoryValueInput.placeholder = '4';
+    this._memoryValueInput.step = 'any';
+    this._memoryValueInput.min = '0';
+    memoryRow.appendChild(this._memoryValueInput);
+
+    this._memoryUnitSelect = document.createElement('select');
+    this._memoryUnitSelect.name = 'memoryUnit';
+    this._memoryUnitSelect.className = 'jp-mod-styled';
+    for (const unit of MEMORY_UNITS) {
+      const option = document.createElement('option');
+      option.value = unit;
+      option.textContent = unit;
+      this._memoryUnitSelect.appendChild(option);
+    }
+    memoryRow.appendChild(this._memoryUnitSelect);
+
+    memoryField.appendChild(memoryRow);
+
+    const helpText = document.createElement('div');
+    helpText.className = 'jp-JobWizard-helpText';
+    helpText.textContent = '1 MB \u2013 990 GB';
+    memoryField.appendChild(helpText);
+
     rowContainer.appendChild(memoryField);
 
     this.node.appendChild(rowContainer);
@@ -328,6 +396,28 @@ export class JobWizardBody
       }
     }
 
+    const memValue = this._memoryValueInput.value.trim();
+    if (memValue) {
+      const num = parseFloat(memValue);
+      if (isNaN(num) || num <= 0) {
+        this._showError('Memory must be a positive number');
+        this._memoryValueInput.focus();
+        return false;
+      }
+      const unit = this._memoryUnitSelect.value as MemoryUnit;
+      const bytes = memoryToBytes(num, unit);
+      if (bytes < MIN_BYTES) {
+        this._showError('Memory must be at least 1 MB');
+        this._memoryValueInput.focus();
+        return false;
+      }
+      if (bytes > MAX_BYTES) {
+        this._showError('Memory must not exceed 990 GB');
+        this._memoryValueInput.focus();
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -341,7 +431,12 @@ export class JobWizardBody
       outputDir: this._outputDirInput.value.trim(),
       cluster: this._clusterInput.value.trim(),
       cpus: cpus && !isNaN(cpus) ? cpus : undefined,
-      memory: this._memoryInput.value.trim(),
+      memory: this._memoryValueInput.value.trim()
+        ? composeMemoryString(
+            this._memoryValueInput.value.trim(),
+            this._memoryUnitSelect.value as MemoryUnit
+          )
+        : '',
       args: this._args.filter(arg => arg.trim().length > 0)
     };
   }
