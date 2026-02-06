@@ -22,7 +22,8 @@ import { StatusChip } from './StatusChip';
 import { LogViewer, LogViewerEmpty } from './LogViewer';
 import { useCancelJob, useJobExitCodes } from '../api/ctsApi';
 import { MAX_DISPLAYED_OUTPUTS } from '../config';
-import { s3ToJlab } from '../utils/s3PathMapping';
+import { resolveS3ToJlab } from '../utils/s3PathResolver';
+import { IKBaseWindow } from '../types/window';
 
 interface IJobDetailProps {
   job: IJob | undefined;
@@ -84,7 +85,9 @@ const FileLink: React.FC<{
   s3Path: string;
   onClick: (path: string) => void;
 }> = ({ s3Path, onClick }) => {
-  const jlabPath = s3ToJlab(s3Path);
+  const mappings = (window as unknown as IKBaseWindow).kbase?.task_browser
+    ?.s3Mappings;
+  const jlabPath = resolveS3ToJlab(s3Path, mappings ?? null);
   if (jlabPath) {
     return (
       <Link

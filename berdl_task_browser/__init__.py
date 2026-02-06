@@ -54,4 +54,7 @@ def _load_jupyter_server_extension(server_app):
     if bucket := os.environ.get("CDM_DEFAULT_BUCKET"):
         page_config["cdmDefaultBucket"] = bucket
 
+    from .handlers import setup_handlers
+    setup_handlers(server_app.web_app)
+
     server_app.log.info("Registered berdl_task_browser server extension")

@@ -3,6 +3,7 @@
  */
 
 import { JupyterFrontEnd } from '@jupyterlab/application';
+import { S3Mappings } from '../utils/s3PathResolver';
 
 /**
  * CTS namespace interface for window.kbase.task_browser
@@ -12,6 +13,7 @@ export interface ICTSNamespace {
   app: JupyterFrontEnd | null;
   selectJob: ((jobId: string) => void) | null;
   renderJobWidget: ((element: HTMLElement, jobId: string) => () => void) | null;
+  s3Mappings: S3Mappings | null;
 }
 
 /**

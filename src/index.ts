@@ -21,6 +21,8 @@ import { faBarsProgress } from '@fortawesome/free-solid-svg-icons';
 import { PageConfig } from '@jupyterlab/coreutils';
 import { getToken } from './auth/token';
 import { ICTSNamespace, IKBaseWindow } from './types/window';
+import { fetchS3Mappings } from './utils/s3PathResolver';
+import { registerNavigateCommand } from './utils/fileBrowserNav';
 
 // Re-export types for external consumers
 export type { ICTSNamespace, IKBaseWindow };
@@ -125,7 +127,8 @@ function registerCTSNamespace(app: JupyterFrontEnd): void {
     getToken: getToken,
     app: app,
     selectJob: null,
-    renderJobWidget: renderJobWidget
+    renderJobWidget: renderJobWidget,
+    s3Mappings: null
   };
 
   win.kbase = {
@@ -156,6 +159,20 @@ const plugin: JupyterFrontEndPlugin<void> = {
     documentManager: IDocumentManager | null
   ) => {
     registerCTSNamespace(app);
+    registerNavigateCommand(app);
+
+    // Fetch S3 path mappings from server (non-blocking)
+    const baseUrl = PageConfig.getBaseUrl();
+    fetchS3Mappings(baseUrl)
+      .then(mappings => {
+        const cts = getCTSNamespace();
+        if (cts) {
+          cts.s3Mappings = mappings;
+        }
+      })
+      .catch(err =>
+        console.warn('[CTS] S3 mapping discovery failed:', err)
+      );
 
     // Create QueryClient for React Query (shared for embedded widgets)
     const queryClient = new QueryClient({

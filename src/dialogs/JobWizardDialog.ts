@@ -7,7 +7,8 @@ import {
   insertCodeCell,
   generateJobCreationCode
 } from '../utils/notebookUtils';
-import { jlabToS3 } from '../utils/s3PathMapping';
+import { resolveJlabToS3 } from '../utils/s3PathResolver';
+import { IKBaseWindow } from '../types/window';
 
 export type MemoryUnit = 'GB' | 'MB' | 'Gi' | 'Mi';
 
@@ -355,7 +356,9 @@ export class JobWizardBody
     });
     if (result.button.accept && result.value) {
       for (const model of result.value) {
-        const s3Url = jlabToS3(model.path);
+        const mappings = (window as unknown as IKBaseWindow).kbase
+          ?.task_browser?.s3Mappings;
+        const s3Url = resolveJlabToS3(model.path, mappings ?? null);
         if (s3Url) {
           this._addInputFile(s3Url);
         }
