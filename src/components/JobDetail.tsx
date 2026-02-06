@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -9,6 +9,7 @@ import {
   Chip,
   Link
 } from '@mui/material';
+import { JupyterFrontEnd } from '@jupyterlab/application';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faBan } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -21,12 +22,15 @@ import { StatusChip } from './StatusChip';
 import { LogViewer, LogViewerEmpty } from './LogViewer';
 import { useCancelJob, useJobExitCodes } from '../api/ctsApi';
 import { MAX_DISPLAYED_OUTPUTS } from '../config';
+import { resolveS3ToJlab } from '../utils/s3PathResolver';
+import { IKBaseWindow } from '../types/window';
 
 interface IJobDetailProps {
   job: IJob | undefined;
   isLoading: boolean;
   error: Error | null;
   onClose: () => void;
+  app: JupyterFrontEnd;
 }
 
 const formatTimestamp = (isoString: string): string => {
@@ -71,13 +75,42 @@ const StateTimeline: React.FC<{ transitions: ITransitionTime[] }> = ({
   );
 };
 
+const fileSx = {
+  fontSize: '0.6rem',
+  fontFamily: 'monospace',
+  wordBreak: 'break-all'
+};
+
+const FileLink: React.FC<{
+  s3Path: string;
+  onClick: (path: string) => void;
+}> = ({ s3Path, onClick }) => {
+  const mappings = (window as unknown as IKBaseWindow).kbase?.task_browser
+    ?.s3Mappings;
+  const jlabPath = resolveS3ToJlab(s3Path, mappings ?? null);
+  if (jlabPath) {
+    return (
+      <Link
+        component="button"
+        onClick={() => onClick(jlabPath)}
+        sx={{ ...fileSx, textAlign: 'left', cursor: 'pointer' }}
+      >
+        {s3Path}
+      </Link>
+    );
+  }
+  return <Typography sx={fileSx}>{s3Path}</Typography>;
+};
+
 export const JobDetail: React.FC<IJobDetailProps> = ({
   job,
   isLoading,
   error,
-  onClose
+  onClose,
+  app
 }) => {
   const [showAllOutputs, setShowAllOutputs] = useState(false);
+  const [showAllInputs, setShowAllInputs] = useState(false);
   const cancelMutation = useCancelJob();
   const exitCodesQuery = useJobExitCodes(
     job?.id || null,
@@ -89,6 +122,13 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
       cancelMutation.mutate(job.id);
     }
   };
+
+  const openFile = useCallback(
+    (path: string) => {
+      app.commands.execute('filebrowser:open-path', { path });
+    },
+    [app]
+  );
 
   if (isLoading && !job) {
     return (
@@ -343,6 +383,40 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
           </Box>
         )}
 
+        {/* Input Files */}
+        {job.job_input?.input_files && job.job_input.input_files.length > 0 && (
+          <Box sx={{ mb: 0.75 }}>
+            <Typography sx={labelSx}>
+              Input Files ({job.job_input.input_files.length})
+            </Typography>
+            <Box sx={{ pl: 0.5 }}>
+              {(showAllInputs
+                ? job.job_input.input_files
+                : job.job_input.input_files.slice(0, MAX_DISPLAYED_OUTPUTS)
+              ).map((file, index) => (
+                <Box key={index} sx={{ py: 0.125 }}>
+                  <FileLink s3Path={file} onClick={openFile} />
+                </Box>
+              ))}
+              {job.job_input.input_files.length > MAX_DISPLAYED_OUTPUTS && (
+                <Link
+                  component="button"
+                  onClick={() => setShowAllInputs(!showAllInputs)}
+                  sx={{
+                    fontSize: '0.55rem',
+                    color: 'primary.main',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {showAllInputs
+                    ? 'Show less'
+                    : `Show all ${job.job_input.input_files.length} inputs`}
+                </Link>
+              )}
+            </Box>
+          </Box>
+        )}
+
         {/* Outputs */}
         {job.outputs && job.outputs.length > 0 && (
           <Box sx={{ mb: 0.75 }}>
@@ -353,15 +427,7 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
                 : job.outputs.slice(0, MAX_DISPLAYED_OUTPUTS)
               ).map((output, index) => (
                 <Box key={index} sx={{ py: 0.125 }}>
-                  <Typography
-                    sx={{
-                      fontSize: '0.6rem',
-                      fontFamily: 'monospace',
-                      wordBreak: 'break-all'
-                    }}
-                  >
-                    {output.file}
-                  </Typography>
+                  <FileLink s3Path={output.file} onClick={openFile} />
                 </Box>
               ))}
               {job.outputs.length > MAX_DISPLAYED_OUTPUTS && (

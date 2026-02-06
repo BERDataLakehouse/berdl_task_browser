@@ -47,4 +47,7 @@ def _load_jupyter_server_extension(server_app):
     if os.environ.get("CTS_MOCK_MODE", "").lower() in ("true", "1", "yes"):
         page_config["ctsMockMode"] = "true"
 
+    from .handlers import setup_handlers
+    setup_handlers(server_app.web_app)
+
     server_app.log.info("Registered berdl_task_browser server extension")

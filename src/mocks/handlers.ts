@@ -11,7 +11,41 @@ import {
   MOCK_SITES
 } from '../api/mockData';
 
+const MOCK_S3_MAPPINGS = {
+  'my-files': {
+    bucket: 'cdm-lake',
+    prefix: 'users-general-warehouse/testuser'
+  },
+  'my-sql': {
+    bucket: 'cdm-lake',
+    prefix: 'users-sql-warehouse/testuser'
+  },
+  'kbase-files': {
+    bucket: 'cdm-lake',
+    prefix: 'tenant-general-warehouse/kbase'
+  },
+  'kbase-sql': {
+    bucket: 'cdm-lake',
+    prefix: 'tenant-sql-warehouse/kbase'
+  },
+  'kbase-files-ro': {
+    bucket: 'cdm-lake',
+    prefix: 'tenant-general-warehouse/kbase',
+    read_only: true
+  },
+  'kbase-sql-ro': {
+    bucket: 'cdm-lake',
+    prefix: 'tenant-sql-warehouse/kbase',
+    read_only: true
+  }
+};
+
 export const handlers = [
+  // S3 path mappings (server extension endpoint)
+  http.get('*/api/task-browser/s3-path-mappings', () => {
+    return HttpResponse.json({ mappings: MOCK_S3_MAPPINGS });
+  }),
+
   // List sites
   http.get(`${CTS_API_BASE}/sites/`, () => {
     return HttpResponse.json({ sites: MOCK_SITES });

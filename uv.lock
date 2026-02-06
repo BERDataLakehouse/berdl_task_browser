@@ -148,6 +148,7 @@ name = "berdl-task-browser"
 source = { editable = "." }
 dependencies = [
     { name = "ipywidgets" },
+    { name = "jupyter-server" },
     { name = "requests" },
 ]
 
@@ -161,6 +162,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "ipywidgets", specifier = ">=8.0.0" },
+    { name = "jupyter-server", specifier = ">=2.0.0" },
     { name = "requests", specifier = ">=2.25.0" },
 ]
 

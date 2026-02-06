@@ -65,11 +65,15 @@ export const MOCK_SITES: ISite[] = [
 const createJobInput = (
   cluster: string,
   image: string,
-  params?: Record<string, unknown>
+  opts?: {
+    params?: Record<string, unknown>;
+    input_files?: string[];
+    output_dir?: string;
+  }
 ): IJobInput => ({
   cluster,
   image,
-  params
+  ...opts
 });
 
 export const MOCK_JOBS: IJob[] = [
@@ -88,8 +92,14 @@ export const MOCK_JOBS: IJob[] = [
       registered_on: '2024-01-01T00:00:00Z'
     },
     job_input: createJobInput('perlmutter-jaws', 'kbase/analysis-tool:v1.2.3', {
-      param1: 'value1',
-      param2: 42
+      params: { param1: 'value1', param2: 42 },
+      input_files: [
+        's3a://cdm-lake/users-general-warehouse/testuser/data/sample_001.fastq',
+        's3a://cdm-lake/users-general-warehouse/testuser/data/sample_002.fastq',
+        's3a://cdm-lake/users-general-warehouse/testuser/data/sample_003.fastq',
+        's3a://cdm-lake/tenant-general-warehouse/kbase/shared/reference_genome.fa',
+        's3a://cdm-lake/tenant-sql-warehouse/kbase/exports/metadata.parquet'
+      ]
     }),
     cpu_factor: 1.0,
     max_memory: '8Gi',
@@ -115,14 +125,20 @@ export const MOCK_JOBS: IJob[] = [
       registered_by: 'admin',
       registered_on: '2024-01-01T00:00:00Z'
     },
-    job_input: createJobInput(
-      'perlmutter-jaws',
-      'kbase/genome-assembler:v2.0.0'
-    ),
+    job_input: createJobInput('perlmutter-jaws', 'kbase/genome-assembler:v2.0.0', {
+      input_files: [
+        's3a://cdm-lake/users-general-warehouse/testuser/data/reads_R1.fastq',
+        's3a://cdm-lake/users-general-warehouse/testuser/data/reads_R2.fastq',
+        's3a://cdm-lake/tenant-general-warehouse/kbase/shared/ref.fa'
+      ]
+    }),
     outputs: [
-      { file: 'assembly.fasta', crc64nvme: 'abc123' },
-      { file: 'stats.json' },
-      { file: 'log.txt' }
+      {
+        file: 's3a://cdm-lake/users-general-warehouse/testuser/data/assembly.fasta',
+        crc64nvme: 'abc123'
+      },
+      { file: 's3a://cdm-lake/users-general-warehouse/testuser/data/stats.json' },
+      { file: 's3a://cdm-lake/users-general-warehouse/testuser/data/log.txt' }
     ],
     transition_times: createTransitionTimes([
       { state: 'created', timeAgo: 180 },
@@ -149,10 +165,12 @@ export const MOCK_JOBS: IJob[] = [
       registered_by: 'admin',
       registered_on: '2024-01-01T00:00:00Z'
     },
-    job_input: createJobInput(
-      'lawrencium-jaws',
-      'kbase/memory-intensive:latest'
-    ),
+    job_input: createJobInput('lawrencium-jaws', 'kbase/memory-intensive:latest', {
+      input_files: [
+        's3a://cdm-lake/users-general-warehouse/testuser/data/big_dataset.h5',
+        's3a://other-bucket/external/reference.txt'
+      ]
+    }),
     error:
       'Container exited with non-zero status: OutOfMemoryError - Java heap space exceeded. Consider increasing memory allocation or reducing input size.',
     max_memory: '4Gi',
@@ -244,7 +262,10 @@ export const MOCK_JOBS: IJob[] = [
       registered_on: '2024-01-01T00:00:00Z'
     },
     job_input: createJobInput('kbase', 'kbase/legacy-tool:v0.9.0'),
-    outputs: [{ file: 'result1.txt' }, { file: 'result2.txt' }],
+    outputs: [
+      { file: 's3a://cdm-lake/users-general-warehouse/testuser/data/result1.txt' },
+      { file: 's3a://cdm-lake/users-general-warehouse/testuser/data/result2.txt' }
+    ],
     transition_times: createTransitionTimes([
       { state: 'created', timeAgo: 1500 },
       { state: 'download_submitted', timeAgo: 1498 },

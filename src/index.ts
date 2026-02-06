@@ -5,6 +5,7 @@ import {
 } from '@jupyterlab/application';
 import { IStateDB } from '@jupyterlab/statedb';
 import { INotebookTracker } from '@jupyterlab/notebook';
+import { IDocumentManager } from '@jupyterlab/docmanager';
 
 import { Panel } from '@lumino/widgets';
 import { LabIcon } from '@jupyterlab/ui-components';
@@ -20,6 +21,7 @@ import { faBarsProgress } from '@fortawesome/free-solid-svg-icons';
 import { PageConfig } from '@jupyterlab/coreutils';
 import { getToken } from './auth/token';
 import { ICTSNamespace, IKBaseWindow } from './types/window';
+import { fetchS3Mappings } from './utils/s3PathResolver';
 
 // Re-export types for external consumers
 export type { ICTSNamespace, IKBaseWindow };
@@ -124,7 +126,8 @@ function registerCTSNamespace(app: JupyterFrontEnd): void {
     getToken: getToken,
     app: app,
     selectJob: null,
-    renderJobWidget: renderJobWidget
+    renderJobWidget: renderJobWidget,
+    s3Mappings: null
   };
 
   win.kbase = {
@@ -146,14 +149,23 @@ const plugin: JupyterFrontEndPlugin<void> = {
   description: 'A JupyterLab extension for browsing CTS data',
   autoStart: true,
   requires: [ILayoutRestorer, IStateDB],
-  optional: [INotebookTracker],
+  optional: [INotebookTracker, IDocumentManager],
   activate: (
     app: JupyterFrontEnd,
     restorer: ILayoutRestorer,
     stateDB: IStateDB,
-    notebookTracker: INotebookTracker | null
+    notebookTracker: INotebookTracker | null,
+    documentManager: IDocumentManager | null
   ) => {
     registerCTSNamespace(app);
+
+    // Fetch S3 path mappings from server (non-blocking)
+    fetchS3Mappings(PageConfig.getBaseUrl()).then(mappings => {
+      const cts = getCTSNamespace();
+      if (cts) {
+        cts.s3Mappings = mappings;
+      }
+    });
 
     // Create QueryClient for React Query (shared for embedded widgets)
     const queryClient = new QueryClient({
@@ -174,7 +186,9 @@ const plugin: JupyterFrontEndPlugin<void> = {
           ErrorBoundary,
           null,
           React.createElement(CTSBrowser, {
-            notebookTracker
+            app,
+            notebookTracker,
+            documentManager
           })
         )
       )
