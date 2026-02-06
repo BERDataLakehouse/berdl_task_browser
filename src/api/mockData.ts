@@ -124,7 +124,6 @@ export const MOCK_JOBS: IJob[] = [
       { file: 'stats.json' },
       { file: 'log.txt' }
     ],
-    logpath: '/logs/job-e5f6g7h8/',
     transition_times: createTransitionTimes([
       { state: 'created', timeAgo: 180 },
       { state: 'download_submitted', timeAgo: 178 },
@@ -401,6 +400,39 @@ export const MOCK_JOBS: IJob[] = [
       { state: 'job_submitted', timeAgo: 35 },
       { state: 'error_processing_submitting', timeAgo: 8 }
     ])
+  },
+  {
+    id: 'job-x1y2z3w4-error-processed',
+    state: 'error',
+    user: 'testuser',
+    input_file_count: 4,
+    output_file_count: 1,
+    cpu_hours: 0.67,
+    image: {
+      name: 'kbase/pipeline-runner',
+      tag: 'v2.3.0',
+      digest: 'sha256:klm789',
+      entrypoint: ['/pipeline.sh'],
+      registered_by: 'admin',
+      registered_on: '2024-01-01T00:00:00Z'
+    },
+    job_input: createJobInput(
+      'perlmutter-jaws',
+      'kbase/pipeline-runner:v2.3.0'
+    ),
+    error:
+      'Pipeline stage 3 failed: segmentation fault in native module. Error logs collected.',
+    logpath: '/logs/job-x1y2z3w4/',
+    max_memory: '8Gi',
+    transition_times: createTransitionTimes([
+      { state: 'created', timeAgo: 150 },
+      { state: 'download_submitted', timeAgo: 148 },
+      { state: 'job_submitting', timeAgo: 145 },
+      { state: 'job_submitted', timeAgo: 140 },
+      { state: 'error_processing_submitting', timeAgo: 55 },
+      { state: 'error_processing_submitted', timeAgo: 52 },
+      { state: 'error', timeAgo: 50 }
+    ])
   }
 ];
 
@@ -409,36 +441,18 @@ export const MOCK_LOGS: Record<
   string,
   Record<number, { stdout?: string; stderr?: string }>
 > = {
-  'job-e5f6g7h8-completed-successfully': {
+  'job-x1y2z3w4-error-processed': {
     0: {
-      stdout: `[2024-01-15 10:30:00] Starting genome assembly...
-[2024-01-15 10:30:01] Loading input files...
-[2024-01-15 10:30:05] Input validation complete
-[2024-01-15 10:30:10] Running assembly algorithm...
-[2024-01-15 10:35:00] Assembly complete
-[2024-01-15 10:35:01] Writing output files...
-[2024-01-15 10:35:05] Job finished successfully`,
-      stderr: `[WARN] Low memory detected, using conservative settings
-[INFO] Using 4 threads for parallel processing`
-    }
-  },
-  'job-i9j0k1l2-failed-with-error': {
-    0: {
-      stdout: `[2024-01-15 08:00:00] Starting analysis...
-[2024-01-15 08:00:01] Loading large dataset...
-[2024-01-15 08:05:00] Processing batch 1 of 10...`,
-      stderr: `[ERROR] OutOfMemoryError: Java heap space
-[ERROR] at java.util.Arrays.copyOf(Arrays.java:3210)
-[ERROR] at java.util.ArrayList.grow(ArrayList.java:265)
-[ERROR] Job terminated due to memory exhaustion`
-    }
-  },
-  'job-a1b2c3d4-running-analysis': {
-    0: {
-      stdout: `[2024-01-15 12:00:00] Initializing analysis pipeline...
-[2024-01-15 12:00:05] Downloading input data...
-[2024-01-15 12:01:00] Starting main computation...`,
-      stderr: ''
+      stdout: `[2024-01-15 09:00:00] Starting pipeline execution...
+[2024-01-15 09:00:02] Stage 1: Data validation - OK
+[2024-01-15 09:05:00] Stage 2: Preprocessing - OK
+[2024-01-15 09:10:00] Stage 3: Native module invocation...`,
+      stderr: `[ERROR] Segmentation fault (core dumped) in native module
+[ERROR] Signal 11 received at address 0x00007f3b2c001000
+[ERROR] Stack trace:
+[ERROR]   #0 0x00007f3b2c001000 in process_data()
+[ERROR]   #1 0x00007f3b2c002500 in pipeline_stage3()
+[ERROR] Pipeline terminated. Error logs collected for review.`
     }
   }
 };
