@@ -85,9 +85,38 @@ class S3PathMappingsHandler(APIHandler):
         return mappings
 
 
+class MockServiceWorkerHandler(tornado.web.RequestHandler):
+    """Serve MSW's mockServiceWorker.js at the site root for mock mode."""
+
+    def get(self) -> None:
+        try:
+            import importlib.resources
+            msw_path = importlib.resources.files("msw").joinpath("lib", "mockServiceWorker.js")
+            self.set_header("Content-Type", "application/javascript")
+            self.finish(msw_path.read_text())
+        except Exception:
+            # Fallback: find it relative to node_modules
+            import pathlib
+            candidates = list(pathlib.Path(__file__).parent.parent.glob(
+                "node_modules/msw/lib/mockServiceWorker.js"
+            ))
+            if candidates:
+                self.set_header("Content-Type", "application/javascript")
+                self.finish(candidates[0].read_text())
+            else:
+                self.set_status(404)
+                self.finish("mockServiceWorker.js not found")
+
+
 def setup_handlers(web_app: Any) -> None:
     """Register handlers with the Jupyter server."""
     base_url = web_app.settings["base_url"]
-    web_app.add_handlers(".*$", [
+    handlers = [
         (url_path_join(base_url, "api", "task-browser", "s3-path-mappings"), S3PathMappingsHandler),
-    ])
+    ]
+
+    # Serve MSW service worker in mock mode
+    if os.environ.get("CTS_MOCK_MODE", "").lower() in ("true", "1", "yes"):
+        handlers.append(("/mockServiceWorker.js", MockServiceWorkerHandler))
+
+    web_app.add_handlers(".*$", handlers)
