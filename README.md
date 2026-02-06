@@ -65,11 +65,13 @@ With the watch command running, every saved change will immediately be built loc
 
 #### Environment variables
 
-| Variable               | Description                                    |
-| ---------------------- | ---------------------------------------------- |
-| `KBASE_AUTH_TOKEN`     | Auth token for CTS API (required for real API) |
-| `CDM_TASK_SERVICE_URL` | CTS API endpoint (defaults to CI)              |
-| `CTS_MOCK_MODE`        | Set to `true` to enable mock mode              |
+| Variable               | Description                                                          |
+| ---------------------- | -------------------------------------------------------------------- |
+| `KBASE_AUTH_TOKEN`     | Auth token for CTS API (required for real API)                       |
+| `CDM_TASK_SERVICE_URL` | CTS API endpoint (defaults to CI)                                    |
+| `CTS_MOCK_MODE`        | Set to `true` to enable mock mode (auto-sets `hubUser` to `testuser`) |
+| `NB_USER`              | Username for S3-to-JupyterLab path mapping (set by JupyterHub)      |
+| `CDM_DEFAULT_BUCKET`   | S3 bucket name for path mapping (default: `cdm-lake`)               |
 
 #### Mock mode
 

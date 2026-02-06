@@ -46,6 +46,7 @@ def _load_jupyter_server_extension(server_app):
 
     if os.environ.get("CTS_MOCK_MODE", "").lower() in ("true", "1", "yes"):
         page_config["ctsMockMode"] = "true"
+        page_config.setdefault("hubUser", "testuser")
 
     if hub_user := os.environ.get("NB_USER"):
         page_config["hubUser"] = hub_user
