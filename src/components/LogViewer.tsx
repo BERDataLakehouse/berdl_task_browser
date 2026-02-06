@@ -25,6 +25,37 @@ interface ILogViewerProps {
   containerCount?: number;
 }
 
+export const LogViewerEmpty: React.FC = () => (
+  <Paper
+    variant="outlined"
+    sx={{
+      overflow: 'hidden',
+      borderColor: 'divider'
+    }}
+  >
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 0.5,
+        px: 0.75,
+        py: 0.5,
+        bgcolor: 'grey.50'
+      }}
+    >
+      <Typography
+        sx={{
+          fontSize: '0.6rem',
+          fontWeight: 600,
+          color: 'text.secondary'
+        }}
+      >
+        No Logs Available
+      </Typography>
+    </Box>
+  </Paper>
+);
+
 export const LogViewer: React.FC<ILogViewerProps> = ({
   jobId,
   containerCount = 1
