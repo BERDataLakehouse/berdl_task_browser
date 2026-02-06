@@ -68,6 +68,38 @@
   flex-shrink: 0;
 }
 
+.jp-JobWizard-fieldMedium {
+  width: 140px;
+  flex-shrink: 0;
+}
+
+.jp-JobWizard-memoryRow {
+  display: flex;
+  gap: 2px;
+}
+
+.jp-JobWizard-memoryRow input {
+  flex: 1;
+  min-width: 0;
+  border-radius: var(--jp-border-radius) 0 0 var(--jp-border-radius);
+}
+
+.jp-JobWizard-memoryRow select {
+  width: 48px;
+  padding: 4px 2px;
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 0 var(--jp-border-radius) var(--jp-border-radius) 0;
+  background: var(--jp-layout-color1);
+  color: var(--jp-ui-font-color1);
+  font-size: var(--jp-ui-font-size1);
+}
+
+.jp-JobWizard-helpText {
+  margin-top: 2px;
+  font-size: var(--jp-ui-font-size0);
+  color: var(--jp-ui-font-color2);
+}
+
 /* Args section */
 .jp-JobWizard-args {
   margin-bottom: 8px;
