@@ -63,6 +63,18 @@ uv run jupyter lab
 
 With the watch command running, every saved change will immediately be built locally and available in your running JupyterLab. Refresh JupyterLab to load the change in your browser (you may need to wait several seconds for the extension to be rebuilt).
 
+#### Development commands
+
+| Command                  | Description                    |
+| ------------------------ | ------------------------------ |
+| `uv run jlpm build`      | Build extension (dev mode)     |
+| `uv run jlpm build:prod` | Build extension (production)   |
+| `uv run jlpm watch`      | Watch and rebuild on changes   |
+| `uv run jlpm lint`       | Run all linters with auto-fix  |
+| `uv run jlpm lint:check` | Run all linters without fixing |
+| `uv run jlpm test`       | Run Jest tests with coverage   |
+| `uv run jlpm clean:all`  | Clean all build artifacts      |
+
 #### Environment variables
 
 | Variable               | Description                                    |
