@@ -146,7 +146,7 @@ export class JobWizardBody
       browseButton.type = 'button';
       browseButton.className =
         'jp-mod-styled jp-mod-accept jp-JobWizard-addArg';
-      browseButton.textContent = 'Browse S3';
+      browseButton.textContent = 'Browse Lakehouse Minio';
       browseButton.addEventListener('click', () => this._browseS3());
       buttonRow.appendChild(browseButton);
     }
