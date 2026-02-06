@@ -18,7 +18,7 @@ import {
   isCancelableState
 } from '../types/jobs';
 import { StatusChip } from './StatusChip';
-import { LogViewer } from './LogViewer';
+import { LogViewer, LogViewerEmpty } from './LogViewer';
 import { useCancelJob, useJobExitCodes } from '../api/ctsApi';
 import { MAX_DISPLAYED_OUTPUTS } from '../config';
 
@@ -415,7 +415,11 @@ export const JobDetail: React.FC<IJobDetailProps> = ({
         </Box>
 
         {/* Log Viewer */}
-        <LogViewer jobId={job.id} />
+        {job.logpath ? (
+          <LogViewer jobId={job.id} />
+        ) : (
+          job.state === 'error' && <LogViewerEmpty />
+        )}
       </Box>
     </Box>
   );
