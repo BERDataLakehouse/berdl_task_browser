@@ -38,7 +38,6 @@ export function resolveS3ToJlab(
 
   const { bucket, key } = parsed;
 
-  // Build candidate matches: [virtualDir, mapping, remainderPath]
   type Match = { virtualDir: string; mapping: IS3Mapping; remainder: string };
   const matches: Match[] = [];
 
